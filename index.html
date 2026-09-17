@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hanif's Store — Elevate Your Style</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container site-header__inner">
+        <button class="menu-toggle" type="button" aria-label="Open menu">
+          <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+            <path d="M4 7h16M4 12h16M4 17h16"></path>
+          </svg>
+        </button>
+
+        <a class="wordmark" href="index.html" aria-label="Hanif's Store home"
+          >HANIF'S STORE</a
+        >
+
+        <nav class="site-nav" aria-label="Main navigation">
+          <ul class="site-nav__list">
+            <li><a href="#new-arrivals">New Arrivals</a></li>
+            <li><a href="#men">Men</a></li>
+            <li><a href="#women">Women</a></li>
+            <li><a href="#shoes">Shoes</a></li>
+            <li><a href="#accessories">Accessories</a></li>
+          </ul>
+        </nav>
+
+        <div class="header-actions">
+          <button class="header-action" type="button" aria-label="Search">
+            <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+              <circle cx="10.75" cy="10.75" r="5.75"></circle>
+              <path d="m15 15 5 5"></path>
+            </svg>
+          </button>
+          <button
+            class="header-action"
+            type="button"
+            aria-label="View wishlist"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+              <path
+                d="M20.84 8.61a5.5 5.5 0 0 0-7.78-7.78L12 1.89l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 17.48Z"
+              ></path>
+            </svg>
+          </button>
+          <button
+            class="header-action"
+            type="button"
+            aria-label="View shopping bag"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+              <path d="M5 8h14l-1 13H6L5 8Z"></path>
+              <path d="M9 8V6a3 3 0 0 1 6 0v2"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+    <!-- Homepage hero: editorial introduction and primary shopping paths. -->
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__content">
+          <p class="hero__eyebrow">NEW COLLECTION</p>
+          <h1 class="display-heading" id="hero-title">ELEVATE YOUR STYLE</h1>
+          <p class="hero__description">Discover fashion that defines you.</p>
+          <div class="hero__actions">
+            <a class="button button-primary" href="#men">SHOP MEN</a>
+            <a class="button button-secondary" href="#women">SHOP WOMEN</a>
+          </div>
+        </div>
+        <div class="hero__visual">
+          <img
+            src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1400&q=85"
+            alt="Model wearing an elegant neutral-toned fashion look"
+          />
+        </div>
+      </section>
+      <!-- Featured categories: primary paths into the future product catalogue. -->
+      <section
+        class="categories"
+        id="categories"
+        aria-labelledby="categories-title"
+      >
+        <div class="container">
+          <div class="categories__intro">
+            <h2 id="categories-title">SHOP BY CATEGORY</h2>
+            <p>Explore our latest collections.</p>
+          </div>
+
+          <div class="category-grid">
+            <a class="category-card" href="#men">
+              <div class="category-card__image">
+                <img
+                  src="https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=900&q=85"
+                  alt="Man wearing a refined neutral-toned outfit"
+                />
+              </div>
+              <div class="category-card__footer">
+                <h3>MEN</h3>
+                <span class="category-card__cta"
+                  >SHOP NOW <span aria-hidden="true">&#8594;</span></span
+                >
+              </div>
+            </a>
+
+            <a class="category-card" href="#women">
+              <div class="category-card__image">
+                <img
+                  src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=85"
+                  alt="Woman browsing an elegant fashion collection"
+                />
+              </div>
+              <div class="category-card__footer">
+                <h3>WOMEN</h3>
+                <span class="category-card__cta"
+                  >SHOP NOW <span aria-hidden="true">&#8594;</span></span
+                >
+              </div>
+            </a>
+
+            <a class="category-card" href="#shoes">
+              <div class="category-card__image">
+                <img
+                  src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85"
+                  alt="Premium leather sneakers displayed against a clean background"
+                />
+              </div>
+              <div class="category-card__footer">
+                <h3>SHOES</h3>
+                <span class="category-card__cta"
+                  >SHOP NOW <span aria-hidden="true">&#8594;</span></span
+                >
+              </div>
+            </a>
+
+            <a class="category-card" href="#accessories">
+              <div class="category-card__image">
+                <img
+                  src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=900&q=85"
+                  alt="Classic gold watch styled as a fashion accessory"
+                />
+              </div>
+              <div class="category-card__footer">
+                <h3>ACCESSORIES</h3>
+                <span class="category-card__cta"
+                  >SHOP NOW <span aria-hidden="true">&#8594;</span></span
+                >
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+      <!-- Featured products: reusable static product-card foundation. -->
+      <section
+        class="featured-products"
+        id="featured-products"
+        aria-labelledby="featured-products-title"
+      >
+        <div class="container">
+          <div class="featured-products__intro">
+            <div>
+              <h2 id="featured-products-title">FEATURED PRODUCTS</h2>
+              <p>Discover pieces selected for your everyday style.</p>
+            </div>
+            <a class="featured-products__view-all" href="#products"
+              >VIEW ALL <span aria-hidden="true">&#8594;</span></a
+            >
+          </div>
+
+          <div class="product-grid" id="featured-products-grid"></div>
+        </div>
+      </section>
+      <!-- Promotional banner: a campaign-style brand moment between product sections. -->
+      <section class="promo-banner" aria-labelledby="promo-banner-title">
+        <div class="promo-banner__content">
+          <p class="promo-banner__eyebrow">HANIF'S EDIT</p>
+          <h2 id="promo-banner-title">TIMELESS PIECES. MODERN ATTITUDE.</h2>
+          <p class="promo-banner__description">
+            Curated essentials designed to elevate your everyday wardrobe.
+          </p>
+          <a class="button button-primary" href="#collection"
+            >EXPLORE THE COLLECTION</a
+          >
+        </div>
+        <div class="promo-banner__visual">
+          <img
+            src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1400&q=85"
+            alt="Fashion model wearing a tailored black and white editorial look"
+          />
+        </div>
+      </section>
+      <!-- New arrivals: recently added pieces using the shared product-card structure. -->
+      <section
+        class="new-arrivals"
+        id="new-arrivals"
+        aria-labelledby="new-arrivals-title"
+      >
+        <div class="container">
+          <div class="new-arrivals__intro">
+            <div>
+              <h2 id="new-arrivals-title">NEW ARRIVALS</h2>
+              <p>Fresh pieces, just added to the collection.</p>
+            </div>
+            <a class="new-arrivals__shop-all" href="#products"
+              >SHOP ALL <span aria-hidden="true">&#8594;</span></a
+            >
+          </div>
+
+          <div class="new-arrivals__grid" id="new-arrivals-grid"></div>
+        </div>
+      </section>
+      <!-- Trust benefits: the HANIF'S STANDARD customer promise. -->
+      <section class="benefits" id="benefits" aria-labelledby="benefits-title">
+        <div class="container">
+          <div class="benefits__intro">
+            <h2 id="benefits-title">THE HANIF'S STANDARD</h2>
+            <p>
+              Thoughtfully selected fashion, seamless shopping, and service
+              designed around you.
+            </p>
+          </div>
+
+          <ul class="benefits__grid">
+            <li class="benefit">
+              <svg
+                class="benefit__icon"
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                focusable="false"
+              >
+                <path
+                  d="m12 3 7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4Z"
+                ></path>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+              <h3>QUALITY FIRST</h3>
+              <p>
+                Carefully selected pieces with attention to style, materials,
+                and finish.
+              </p>
+            </li>
+
+            <li class="benefit">
+              <svg
+                class="benefit__icon"
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                focusable="false"
+              >
+                <rect x="5" y="10" width="14" height="11" rx="1"></rect>
+                <path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"></path>
+              </svg>
+              <h3>SECURE SHOPPING</h3>
+              <p>
+                A safe and protected shopping experience from checkout to order
+                completion.
+              </p>
+            </li>
+
+            <li class="benefit">
+              <svg
+                class="benefit__icon"
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                focusable="false"
+              >
+                <path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"></path>
+                <circle cx="7" cy="19" r="2"></circle>
+                <circle cx="18" cy="19" r="2"></circle>
+              </svg>
+              <h3>DELIVERY ACROSS NIGERIA</h3>
+              <p>
+                Convenient delivery options designed for customers across
+                Nigeria.
+              </p>
+            </li>
+
+            <li class="benefit">
+              <svg
+                class="benefit__icon"
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                focusable="false"
+              >
+                <path d="M4 5h16v12H8l-4 4V5Z"></path>
+                <path d="M8 10h8M8 13h5"></path>
+              </svg>
+              <h3>CUSTOMER SUPPORT</h3>
+              <p>We're here to help before, during, and after your purchase.</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+      <!-- Testimonials: illustrative demo feedback for the development storefront. -->
+      <section
+        class="testimonials"
+        id="testimonials"
+        aria-labelledby="testimonials-title"
+      >
+        <div class="container">
+          <div class="testimonials__intro">
+            <div>
+              <p class="testimonials__eyebrow">DEMO REVIEWS</p>
+              <h2 id="testimonials-title">WHAT OUR CUSTOMERS SAY</h2>
+            </div>
+            <p>
+              A few words from customers who have experienced the Hanif's Store
+              collection.
+            </p>
+          </div>
+
+          <ul class="testimonial-grid">
+            <li class="testimonial">
+              <span class="testimonial__quote" aria-hidden="true">&#8220;</span>
+              <blockquote>
+                <p>
+                  Beautiful quality and exactly what I expected. The fit and
+                  finish are excellent.
+                </p>
+              </blockquote>
+              <footer class="testimonial__author">
+                <span class="testimonial__avatar" aria-hidden="true">AO</span>
+                <div>
+                  <cite>Amina O.</cite>
+                  <p>Lagos, Nigeria</p>
+                </div>
+              </footer>
+            </li>
+
+            <li class="testimonial">
+              <span class="testimonial__quote" aria-hidden="true">&#8220;</span>
+              <blockquote>
+                <p>
+                  The whole shopping experience was simple, smooth, and the
+                  pieces look even better in person.
+                </p>
+              </blockquote>
+              <footer class="testimonial__author">
+                <span class="testimonial__avatar" aria-hidden="true">DA</span>
+                <div>
+                  <cite>David A.</cite>
+                  <p>Abuja, Nigeria</p>
+                </div>
+              </footer>
+            </li>
+
+            <li class="testimonial">
+              <span class="testimonial__quote" aria-hidden="true">&#8220;</span>
+              <blockquote>
+                <p>
+                  I found exactly what I was looking for. The attention to
+                  detail really stands out.
+                </p>
+              </blockquote>
+              <footer class="testimonial__author">
+                <span class="testimonial__avatar" aria-hidden="true">ZM</span>
+                <div>
+                  <cite>Zainab M.</cite>
+                  <p>Ibadan, Nigeria</p>
+                </div>
+              </footer>
+            </li>
+          </ul>
+        </div>
+      </section>
+      <!-- Newsletter signup: UI-only email capture for future mailing integration. -->
+      <section
+        class="newsletter"
+        id="newsletter"
+        aria-labelledby="newsletter-title"
+      >
+        <div class="container newsletter__inner">
+          <div class="newsletter__content">
+            <p class="newsletter__eyebrow">STAY IN THE KNOW</p>
+            <h2 id="newsletter-title">JOIN THE HANIF'S LIST</h2>
+            <p class="newsletter__description">
+              Be the first to discover new collections, exclusive offers, and
+              the latest from Hanif's Store.
+            </p>
+          </div>
+
+          <form class="newsletter__form" action="#newsletter" method="post">
+            <label class="visually-hidden" for="newsletter-email">
+              Email address
+            </label>
+            <div class="newsletter__form-row">
+              <input
+                id="newsletter-email"
+                class="newsletter__input"
+                type="email"
+                name="email"
+                placeholder="Enter your email address"
+                autocomplete="email"
+                required
+              />
+              <button class="button button-primary" type="submit">
+                SUBSCRIBE
+              </button>
+            </div>
+            <p class="newsletter__privacy">
+              By subscribing, you agree to receive updates from Hanif's Store.
+            </p>
+          </form>
+        </div>
+      </section>
+    </main>
+    <!-- Site footer: navigation, customer care, contact details, and social links. -->
+    <footer class="site-footer" id="footer">
+      <div class="container">
+        <div class="site-footer__grid">
+          <div class="site-footer__brand">
+            <a class="site-footer__wordmark" href="index.html">HANIF'S STORE</a>
+            <p>Modern fashion, thoughtfully curated for you.</p>
+          </div>
+
+          <nav class="site-footer__nav" aria-label="Shop">
+            <h2>SHOP</h2>
+            <ul>
+              <li><a href="#new-arrivals">New Arrivals</a></li>
+              <li><a href="#men">Men</a></li>
+              <li><a href="#women">Women</a></li>
+              <li><a href="#shoes">Shoes</a></li>
+              <li><a href="#accessories">Accessories</a></li>
+            </ul>
+          </nav>
+
+          <nav class="site-footer__nav" aria-label="Customer care">
+            <h2>CUSTOMER CARE</h2>
+            <ul>
+              <li><a href="#contact">Contact Us</a></li>
+              <li><a href="#delivery">Delivery Information</a></li>
+              <li><a href="#returns">Returns &amp; Exchanges</a></li>
+              <li><a href="#faqs">FAQs</a></li>
+              <li><a href="#track-order">Track Order</a></li>
+            </ul>
+          </nav>
+
+          <nav class="site-footer__nav" aria-label="Information">
+            <h2>INFORMATION</h2>
+            <ul>
+              <li><a href="#about">About Us</a></li>
+              <li><a href="#privacy">Privacy Policy</a></li>
+              <li><a href="#terms">Terms &amp; Conditions</a></li>
+              <li><a href="#cookies">Cookie Policy</a></li>
+            </ul>
+          </nav>
+
+          <div class="site-footer__contact" id="contact">
+            <h2>CONTACT</h2>
+            <address>
+              <p>
+                <span>Email</span
+                ><a href="mailto:hello@hanifsstore.example"
+                  >hello@hanifsstore.example</a
+                >
+              </p>
+              <p>
+                <span>Phone</span
+                ><a href="tel:+2348000000000">+234 800 000 0000</a>
+              </p>
+              <p>
+                <span>Location</span>Lagos, Nigeria
+                <small>(demo details)</small>
+              </p>
+            </address>
+
+            <div class="site-footer__social">
+              <h3>FOLLOW US</h3>
+              <ul>
+                <li>
+                  <a
+                    href="#instagram"
+                    aria-label="Follow Hanif's Store on Instagram"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      focusable="false"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+                      <circle cx="12" cy="12" r="4"></circle>
+                      <circle cx="17.5" cy="6.5" r="1"></circle>
+                    </svg>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#facebook"
+                    aria-label="Follow Hanif's Store on Facebook"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      focusable="false"
+                    >
+                      <path
+                        d="M14 8h2V4h-2c-3 0-5 2-5 5v3H6v4h3v4h4v-4h3l1-4h-4V9c0-.7.3-1 1-1Z"
+                      ></path>
+                    </svg>
+                  </a>
+                </li>
+                <li>
+                  <a href="#tiktok" aria-label="Follow Hanif's Store on TikTok">
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      focusable="false"
+                    >
+                      <path
+                        d="M15 4c.4 2.4 1.8 3.8 4 4v3.5c-1.5 0-2.8-.4-4-1.1V16a5 5 0 1 1-5-5h.5v3.5H10a1.5 1.5 0 1 0 1.5 1.5V4H15Z"
+                      ></path>
+                    </svg>
+                  </a>
+                </li>
+                <li>
+                  <a href="#x" aria-label="Follow Hanif's Store on X">
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      focusable="false"
+                    >
+                      <path d="m5 4 14 16M19 4 5 20"></path>
+                    </svg>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="site-footer__bottom">
+          <p>&copy; 2026 HANIF'S STORE. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+    <script src="script.js" defer></script>
+  </body>
+</html>
