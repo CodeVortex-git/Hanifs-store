@@ -244,11 +244,15 @@ const products = [
   },
 ];
 
-// DOM elements
+// ============================================
+// DOM Elements
+// ============================================
 const featuredProductsGrid = document.querySelector("#featured-products-grid");
 const newArrivalsGrid = document.querySelector("#new-arrivals-grid");
 
-// Product rendering
+// ============================================
+// Product Rendering
+// ============================================
 const nairaFormatter = new Intl.NumberFormat("en-NG", {
   style: "currency",
   currency: "NGN",
@@ -270,7 +274,7 @@ function escapeHtml(value) {
 
 function renderProductCard(product) {
   const productName = escapeHtml(product.name);
-  const categoryLabel = escapeHtml(`${product.gender} ${product.category}`);
+  const category = escapeHtml(product.category);
   const badge = product.newArrival
     ? '<span class="product-card__badge">NEW</span>'
     : "";
@@ -283,7 +287,7 @@ function renderProductCard(product) {
           ${badge}
         </div>
         <div class="product-card__details">
-          <p class="product-card__category">${categoryLabel}</p>
+          <p class="product-card__category">${category}</p>
           <h3>${productName}</h3>
           <p class="price">${formatPrice(product.price)}</p>
         </div>
@@ -303,15 +307,18 @@ function renderProducts(productList, container) {
 
   container.innerHTML = productList.length
     ? productList.map(renderProductCard).join("")
-    : '<p class="product-grid__empty">No products available.</p>';
+    : '<p class="product-grid__empty">No products available at the moment.</p>';
 }
 
+// ============================================
 // Initialization
-renderProducts(
-  products.filter((product) => product.featured === true),
-  featuredProductsGrid,
+// ============================================
+const featuredProducts = products.filter(
+  (product) => product.featured === true,
 );
-renderProducts(
-  products.filter((product) => product.newArrival === true),
-  newArrivalsGrid,
+const newArrivalProducts = products.filter(
+  (product) => product.newArrival === true,
 );
+
+renderProducts(featuredProducts, featuredProductsGrid);
+renderProducts(newArrivalProducts, newArrivalsGrid);
