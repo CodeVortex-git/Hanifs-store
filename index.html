@@ -45,23 +45,29 @@
           <button
             class="header-action"
             type="button"
+            id="wishlist-toggle"
             aria-label="View wishlist"
+            aria-expanded="false"
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
               <path
                 d="M20.84 8.61a5.5 5.5 0 0 0-7.78-7.78L12 1.89l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 17.48Z"
               ></path>
             </svg>
+            <span class="wishlist-count" id="wishlist-count">0</span>
           </button>
           <button
             class="header-action"
             type="button"
+            id="cart-toggle"
             aria-label="View shopping bag"
+            aria-expanded="false"
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
               <path d="M5 8h14l-1 13H6L5 8Z"></path>
               <path d="M9 8V6a3 3 0 0 1 6 0v2"></path>
             </svg>
+            <span class="cart-count" id="cart-count">0</span>
           </button>
         </div>
       </div>
@@ -733,7 +739,133 @@
           </ul>
         </div>
       </section>
+      <!-- Shop collection: searchable, filterable, and sortable product results. -->
+      <section class="shop-collection" id="shop" aria-labelledby="shop-title">
+        <div class="container">
+          <div class="shop-collection__intro">
+            <h2 id="shop-title">SHOP THE COLLECTION</h2>
+            <p>Explore thoughtfully selected pieces for every style.</p>
+          </div>
+
+          <div class="shop-controls" aria-label="Product search and filters">
+            <div class="shop-control shop-control--search">
+              <label for="product-search">Search products</label>
+              <input
+                id="product-search"
+                type="search"
+                placeholder="Search products..."
+                autocomplete="off"
+              />
+            </div>
+            <div class="shop-control">
+              <label for="category-filter">Category</label>
+              <select id="category-filter">
+                <option value="all">All Categories</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Shoes">Shoes</option>
+                <option value="Accessories">Accessories</option>
+              </select>
+            </div>
+            <div class="shop-control">
+              <label for="gender-filter">Gender</label>
+              <select id="gender-filter">
+                <option value="all">All</option>
+                <option value="Men">Men</option>
+                <option value="Women">Women</option>
+                <option value="Unisex">Unisex</option>
+              </select>
+            </div>
+            <div class="shop-control">
+              <label for="sort-products">Sort products</label>
+              <select id="sort-products">
+                <option value="featured">Featured</option>
+                <option value="name-ascending">Name: A-Z</option>
+                <option value="name-descending">Name: Z-A</option>
+                <option value="price-ascending">Price: Low to High</option>
+                <option value="price-descending">Price: High to Low</option>
+              </select>
+            </div>
+            <button
+              class="button button-secondary shop-controls__clear"
+              id="clear-filters"
+              type="button"
+            >
+              CLEAR FILTERS
+            </button>
+          </div>
+
+          <p
+            class="shop-collection__result-count"
+            id="product-result-count"
+            aria-live="polite"
+          ></p>
+          <div
+            class="shop-products-grid product-grid"
+            id="shop-products-grid"
+          ></div>
+        </div>
+      </section>
+      <!-- Checkout page: customer information and a cart-backed order summary. -->
+      <section
+        class="checkout-page"
+        id="checkout-page"
+        aria-labelledby="checkout-title"
+      >
+        <div class="container">
+          <div id="checkout-content"></div>
+        </div>
+      </section>
       <!-- Newsletter signup: UI-only email capture for future mailing integration. -->
+      <!-- Cart page: shared cart state rendered as a full customer-facing view. -->
+      <section
+        class="cart-page"
+        id="cart-page"
+        aria-labelledby="cart-page-title"
+      >
+        <div class="container">
+          <div class="cart-page__intro">
+            <h2 id="cart-page-title">YOUR SHOPPING BAG</h2>
+            <p>Review your selected pieces before continuing to checkout.</p>
+          </div>
+          <div class="cart-page__layout">
+            <div class="cart-page__items" id="cart-page-items"></div>
+            <aside class="cart-summary" aria-labelledby="cart-summary-title">
+              <h3 id="cart-summary-title">ORDER SUMMARY</h3>
+              <dl>
+                <div>
+                  <dt>Subtotal</dt>
+                  <dd id="cart-page-subtotal">₦0</dd>
+                </div>
+                <div>
+                  <dt>Delivery</dt>
+                  <dd>Calculated at checkout</dd>
+                </div>
+                <div class="cart-summary__total">
+                  <dt>Total</dt>
+                  <dd id="cart-page-total">₦0</dd>
+                </div>
+              </dl>
+              <a
+                class="button button-primary cart-summary__checkout"
+                id="cart-page-checkout"
+                href="#checkout-page"
+                >PROCEED TO CHECKOUT</a
+              >
+              <a
+                class="button button-secondary cart-summary__continue"
+                href="#shop"
+                >CONTINUE SHOPPING</a
+              >
+              <p
+                class="cart-summary__status"
+                id="cart-page-status"
+                role="status"
+                aria-live="polite"
+              ></p>
+            </aside>
+          </div>
+        </div>
+      </section>
       <section
         class="newsletter"
         id="newsletter"
@@ -774,6 +906,85 @@
         </div>
       </section>
     </main>
+    <!-- Product details modal: one reusable dialog for all product cards. -->
+    <div class="product-modal" id="product-modal" aria-hidden="true" hidden>
+      <div class="product-modal__backdrop"></div>
+      <div
+        class="product-modal__dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="product-modal-title"
+      >
+        <button
+          class="product-modal__close"
+          type="button"
+          aria-label="Close product details"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+            <path d="m6 6 12 12M18 6 6 18"></path>
+          </svg>
+        </button>
+        <div id="product-modal-content"></div>
+      </div>
+    </div>
+    <!-- Wishlist drawer: persistent client-side saved products. -->
+    <aside
+      class="wishlist-drawer"
+      id="wishlist-drawer"
+      aria-hidden="true"
+      hidden
+      aria-labelledby="wishlist-title"
+    >
+      <div class="wishlist-drawer__backdrop"></div>
+      <div class="wishlist-drawer__panel">
+        <div class="wishlist-drawer__header">
+          <h2 id="wishlist-title">YOUR WISHLIST</h2>
+          <button
+            class="wishlist-drawer__close"
+            id="wishlist-close"
+            type="button"
+            aria-label="Close wishlist"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+              <path d="m6 6 12 12M18 6 6 18"></path>
+            </svg>
+          </button>
+        </div>
+        <div id="wishlist-items"></div>
+      </div>
+    </aside>
+    <!-- Cart drawer: shares the same cart state as the cart page. -->
+    <aside
+      class="cart-drawer"
+      id="cart-drawer"
+      aria-hidden="true"
+      hidden
+      aria-labelledby="cart-drawer-title"
+    >
+      <div class="cart-drawer__backdrop"></div>
+      <div class="cart-drawer__panel">
+        <div class="cart-drawer__header">
+          <h2 id="cart-drawer-title">YOUR SHOPPING BAG</h2>
+          <button
+            class="cart-drawer__close"
+            id="cart-close"
+            type="button"
+            aria-label="Close shopping bag"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+              <path d="m6 6 12 12M18 6 6 18"></path>
+            </svg>
+          </button>
+        </div>
+        <div id="cart-drawer-items"></div>
+        <div class="cart-drawer__footer">
+          <p>Subtotal <strong id="cart-drawer-subtotal">₦0</strong></p>
+          <a class="button button-primary" href="#cart-page" data-close-cart
+            >VIEW CART</a
+          >
+        </div>
+      </div>
+    </aside>
     <!-- Site footer: navigation, customer care, contact details, and social links. -->
     <footer class="site-footer" id="footer">
       <div class="container">
