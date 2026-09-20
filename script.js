@@ -53,7 +53,7 @@ const products = [
     gender: "Women",
     price: 68500,
     image:
-      "https://images.unsplash.com/photo-1583496661160-fb5886a13d27?auto=format&fit=crop&w=800&q=85",
+      "https://images.unsplash.com/photo-1577900232427-18219b9166a0?auto=format&fit=crop&w=800&q=85",
     alt: "Woman wearing a pleated neutral midi skirt",
     description: "A fluid pleated skirt with a graceful midi length.",
     sizes: ["XS", "S", "M", "L"],
