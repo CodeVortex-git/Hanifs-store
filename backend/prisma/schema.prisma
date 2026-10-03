@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+---
+
+model Product {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(255)
+  description  String?  @db.Text
+  category     String   @db.VarChar(100)
+  gender       String   @db.VarChar(20)  // "Men", "Women", "Unisex"
+  basePrice    Int      @db.Int      // Price in kobo (₦1 = 100 kobo)
+  imageUrl     String   @db.VarChar(500)
+  imageAlt     String?  @db.VarChar(255)
+  featured     Boolean  @default(false)
+  newArrival   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // One-to-many: Product → ProductVariant
+  variants     ProductVariant[] @relation("ProductVariants")
+}
+
+---
+
+model ProductVariant {
+  id         Int      @id @default(autoincrement())
+  productId  Int
+  product    Product  @relation("ProductVariants", fields: [productId], references: [id], onDelete: Cascade)
+  size       String   @db.VarChar(20)
+  color      String   @db.VarChar(50)
+  stock      Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Unique constraint: one active variant per product per size/color combo
+  @@unique([productId, size, color])
+
+  @@index([productId])
+  @@index([active])
+  @@index([stock])
+}
+
+---
+
+model Order {
+  id              String   @id @default(cuid())
+  customerEmail   String   @db.VarChar(255)
+  firstName       String   @db.VarChar(100)
+  lastName        String   @db.VarChar(100)
+  phone           String   @db.VarChar(20)
+  shippingAddress String   @db.Text
+  city            String   @db.VarChar(100)
+  state           String   @db.VarChar(100)
+  country         String   @db.VarChar(100)  // Default: "Nigeria"
+  subtotal        Int      @db.Int      // Sum of line totals (in kobo)
+  deliveryAmount  Int      @default(0)   // Delivery fee (in kobo)
+  totalAmount     Int      @db.Int      // Authoritative total (in kobo)
+  orderStatus     String   @default("pending")  // Matches ORDER_STATUS enum
+  paymentStatus   String   @default("pending")  // Matches PAYMENT_STATUS enum
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // One-to-many: Order → OrderItem
+  items           OrderItem[] @relation("OrderItems")
+}
+
+---
+
+model OrderItem {
+  id            String   @id @default(cuid())
+  orderId       String   @db.VarChar(255)  // FK → Order.id
+  productId     Int      @db.Int      // FK → ProductVariant.id
+  product       Product  @relation("OrderItemProduct", fields: [productId], references: [id], onDelete: Restrict)
+  productName   String   @db.VarChar(255)  // Snapshot of product.name
+  selectedSize  String   @db.VarChar(20)  // Snapshot of size
+  selectedColor String   @db.VarChar(50)  // Snapshot of color
+  quantity      Int      @default(1)     // Units ordered
+  unitPrice     Int      @db.Int      // Price per unit at time of order (in kobo)
+  lineTotal     Int      @db.Int      // quantity × unitPrice (in kobo)
+  createdAt     DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([createdAt])
+}
