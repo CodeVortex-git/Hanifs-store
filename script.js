@@ -1,248 +1,20 @@
-// Central product catalog
-// This demo data will eventually be replaced by products retrieved from the backend API.
-const products = [
-  {
-    id: 1,
-    name: "Essential Cotton Tee",
-    category: "Clothing",
-    gender: "Men",
-    price: 45000,
-    image:
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=85",
-    alt: "White cotton crew-neck tee on a model",
-    description: "A clean everyday tee made from soft, breathable cotton.",
-    sizes: ["S", "M", "L", "XL"],
-    colors: ["White", "Black", "Grey"],
-    featured: true,
-    newArrival: false,
-  },
-  {
-    id: 2,
-    name: "Tailored Linen Shirt",
-    category: "Clothing",
-    gender: "Men",
-    price: 78000,
-    image:
-      "https://images.unsplash.com/photo-1603252110481-7ba873bf42ab?auto=format&fit=crop&w=800&q=85",
-    alt: "Tailored beige linen shirt styled for men",
-    description: "A polished linen shirt with an easy tailored silhouette.",
-    sizes: ["S", "M", "L", "XL"],
-    colors: ["Beige", "White", "Navy"],
-    featured: true,
-    newArrival: false,
-  },
-  {
-    id: 3,
-    name: "Silk Satin Evening Dress",
-    category: "Clothing",
-    gender: "Women",
-    price: 125000,
-    image:
-      "https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=800&q=85",
-    alt: "Elegant black satin dress on a model",
-    description: "An elegant satin dress designed for refined occasions.",
-    sizes: ["XS", "S", "M", "L"],
-    colors: ["Black", "Champagne", "Emerald"],
-    featured: true,
-    newArrival: false,
-  },
-  {
-    id: 4,
-    name: "Pleated Midi Skirt",
-    category: "Clothing",
-    gender: "Women",
-    price: 68500,
-    image:
-      "https://images.unsplash.com/photo-1577900232427-18219b9166a0?auto=format&fit=crop&w=800&q=85",
-    alt: "Woman wearing a pleated neutral midi skirt",
-    description: "A fluid pleated skirt with a graceful midi length.",
-    sizes: ["XS", "S", "M", "L"],
-    colors: ["Taupe", "Black", "Ivory"],
-    featured: true,
-    newArrival: false,
-  },
-  {
-    id: 5,
-    name: "Relaxed Fit Oxford Shirt",
-    category: "Clothing",
-    gender: "Men",
-    price: 65000,
-    image:
-      "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=85",
-    alt: "Relaxed fit blue Oxford shirt on a model",
-    description: "A relaxed Oxford shirt for effortless everyday dressing.",
-    sizes: ["S", "M", "L", "XL"],
-    colors: ["Blue", "White", "Stone"],
-    featured: false,
-    newArrival: true,
-  },
-  {
-    id: 6,
-    name: "Ribbed Knit Dress",
-    category: "Clothing",
-    gender: "Women",
-    price: 88000,
-    image:
-      "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=85",
-    alt: "Woman wearing a minimalist ribbed knit dress",
-    description:
-      "A softly structured knit dress with a refined ribbed texture.",
-    sizes: ["XS", "S", "M", "L"],
-    colors: ["Black", "Cream", "Camel"],
-    featured: false,
-    newArrival: true,
-  },
-  {
-    id: 7,
-    name: "Premium Cotton Overshirt",
-    category: "Clothing",
-    gender: "Men",
-    price: 82500,
-    image:
-      "https://images.unsplash.com/photo-1598808503746-f34c53b9323e?auto=format&fit=crop&w=800&q=85",
-    alt: "Premium cotton overshirt in a warm neutral shade",
-    description: "A versatile cotton overshirt for layered daily looks.",
-    sizes: ["S", "M", "L", "XL"],
-    colors: ["Camel", "Black", "Olive"],
-    featured: false,
-    newArrival: true,
-  },
-  {
-    id: 8,
-    name: "City Wool Trousers",
-    category: "Clothing",
-    gender: "Men",
-    price: 89500,
-    image:
-      "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=800&q=85",
-    alt: "Man wearing tailored dark trousers in an urban setting",
-    description: "Precisely cut wool trousers with a clean tapered leg.",
-    sizes: ["30", "32", "34", "36", "38"],
-    colors: ["Charcoal", "Black", "Navy"],
-    featured: false,
-    newArrival: false,
-  },
-  {
-    id: 9,
-    name: "Minimal Leather Sneaker",
-    category: "Shoes",
-    gender: "Unisex",
-    price: 92000,
-    image:
-      "https://images.unsplash.com/photo-1495555961986-6d4c1ecb7be3?auto=format&fit=crop&w=800&q=85",
-    alt: "Minimalist cream leather sneaker",
-    description: "A low-profile leather sneaker built for everyday movement.",
-    sizes: ["39", "40", "41", "42", "43", "44"],
-    colors: ["Cream", "White", "Black"],
-    featured: false,
-    newArrival: true,
-  },
-  {
-    id: 10,
-    name: "Classic Leather Loafers",
-    category: "Shoes",
-    gender: "Men",
-    price: 145000,
-    image:
-      "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&w=800&q=85",
-    alt: "Polished black leather loafers",
-    description: "Polished leather loafers with a timeless refined profile.",
-    sizes: ["39", "40", "41", "42", "43", "44"],
-    colors: ["Black", "Brown"],
-    featured: true,
-    newArrival: false,
-  },
-  {
-    id: 11,
-    name: "Sculpted Block Heels",
-    category: "Shoes",
-    gender: "Women",
-    price: 118000,
-    image:
-      "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=800&q=85",
-    alt: "Sculpted black block heel shoes",
-    description: "Modern block heels balancing confident style and comfort.",
-    sizes: ["36", "37", "38", "39", "40"],
-    colors: ["Black", "Tan", "Ivory"],
-    featured: false,
-    newArrival: false,
-  },
-  {
-    id: 12,
-    name: "Strappy Leather Sandals",
-    category: "Shoes",
-    gender: "Women",
-    price: 72000,
-    image:
-      "https://images.unsplash.com/photo-1603487742131-4160ec999306?auto=format&fit=crop&w=800&q=85",
-    alt: "Minimal leather sandals with slender straps",
-    description: "Lightweight leather sandals for warm-weather styling.",
-    sizes: ["36", "37", "38", "39", "40"],
-    colors: ["Tan", "Black", "Gold"],
-    featured: false,
-    newArrival: true,
-  },
-  {
-    id: 13,
-    name: "Structured Shoulder Bag",
-    category: "Accessories",
-    gender: "Women",
-    price: 112000,
-    image:
-      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=85",
-    alt: "Structured black leather shoulder bag",
-    description: "A structured leather bag with room for daily essentials.",
-    sizes: ["One Size"],
-    colors: ["Black", "Cognac"],
-    featured: true,
-    newArrival: false,
-  },
-  {
-    id: 14,
-    name: "Heritage Gold Watch",
-    category: "Accessories",
-    gender: "Unisex",
-    price: 185000,
-    image:
-      "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=800&q=85",
-    alt: "Minimal gold-tone wristwatch with a dark face",
-    description: "A gold-tone watch with a minimal face and classic finish.",
-    sizes: ["One Size"],
-    colors: ["Gold", "Black"],
-    featured: true,
-    newArrival: false,
-  },
-  {
-    id: 15,
-    name: "Everyday Crossbody Bag",
-    category: "Accessories",
-    gender: "Women",
-    price: 76000,
-    image:
-      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=85",
-    alt: "Everyday tan leather crossbody bag",
-    description: "A compact crossbody bag designed for hands-free days.",
-    sizes: ["One Size"],
-    colors: ["Tan", "Black", "Cream"],
-    featured: false,
-    newArrival: true,
-  },
-  {
-    id: 16,
-    name: "Frame Shield Sunglasses",
-    category: "Accessories",
-    gender: "Unisex",
-    price: 58000,
-    image:
-      "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=800&q=85",
-    alt: "Black frame sunglasses with a sleek modern shape",
-    description: "Sleek sunglasses with a confident frame and UV protection.",
-    sizes: ["One Size"],
-    colors: ["Black", "Tortoiseshell"],
-    featured: false,
-    newArrival: true,
-  },
-];
+// Product records are loaded from the database-backed catalog API.
+let products = [];
+
+const localApiHostnames = ["localhost", "127.0.0.1"];
+const localFrontendPorts = ["3000", "5500"];
+const isLocalFrontend =
+  localApiHostnames.includes(window.location.hostname) ||
+  localFrontendPorts.includes(window.location.port);
+const defaultApiBaseUrl = isLocalFrontend
+  ? `http://${localApiHostnames.includes(window.location.hostname) ? "localhost" : window.location.hostname}:5000`
+  : "";
+const API_BASE_URL = String(
+  window.HANIFS_API_BASE_URL || defaultApiBaseUrl,
+).replace(/\/+$/, "");
+const PRODUCTS_API_URL = `${API_BASE_URL}/api/products`;
+const ORDERS_API_URL = `${API_BASE_URL}/api/orders`;
+const PAYMENTS_API_URL = `${API_BASE_URL}/api/payments`;
 
 // ============================================
 // DOM Elements
@@ -256,6 +28,7 @@ const sortProducts = document.querySelector("#sort-products");
 const clearFilters = document.querySelector("#clear-filters");
 const shopProductsGrid = document.querySelector("#shop-products-grid");
 const productResultCount = document.querySelector("#product-result-count");
+const catalogStatus = document.querySelector("#catalog-status");
 const productModal = document.querySelector("#product-modal");
 const productModalContent = document.querySelector("#product-modal-content");
 const productModalClose = document.querySelector(".product-modal__close");
@@ -283,6 +56,98 @@ const cartPageStatus = document.querySelector("#cart-page-status");
 const checkoutContent = document.querySelector("#checkout-content");
 let modalTrigger = null;
 
+function mapApiProduct(apiProduct) {
+  const variants = (Array.isArray(apiProduct.variants) ? apiProduct.variants : [])
+    .filter((variant) => variant.active)
+    .map((variant) => ({
+      id: variant.id,
+      size: variant.size,
+      color: variant.color,
+      price: variant.price,
+      stock: variant.stock,
+      active: variant.active,
+    }));
+
+  return {
+    id: apiProduct.id,
+    name: apiProduct.name,
+    category: apiProduct.category,
+    gender: apiProduct.gender,
+    price: apiProduct.basePrice,
+    image: apiProduct.imageUrl,
+    alt: apiProduct.imageAlt,
+    description: apiProduct.description,
+    featured: apiProduct.featured,
+    newArrival: apiProduct.newArrival,
+    active: apiProduct.active,
+    variants,
+    sizes: [...new Set(variants.map((variant) => variant.size))],
+    colors: [...new Set(variants.map((variant) => variant.color))],
+  };
+}
+
+function setCatalogBusy(isBusy) {
+  [featuredProductsGrid, newArrivalsGrid, shopProductsGrid].forEach((grid) => {
+    grid?.setAttribute("aria-busy", String(isBusy));
+  });
+}
+
+function setCatalogStatus(message, isError = false) {
+  catalogStatus.textContent = message;
+  catalogStatus.hidden = !message;
+  catalogStatus.classList.toggle("catalog-status--error", isError);
+  catalogStatus.setAttribute("role", isError ? "alert" : "status");
+}
+
+async function loadProducts() {
+  setCatalogBusy(true);
+  setCatalogStatus("Loading products...");
+
+  try {
+    const response = await fetch(PRODUCTS_API_URL, {
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) {
+      throw new Error("Product request failed");
+    }
+
+    const payload = await response.json();
+    if (!payload || !Array.isArray(payload.products)) {
+      throw new Error("Product response is invalid");
+    }
+
+    products = payload.products
+      .filter((product) => product && product.active)
+      .map(mapApiProduct);
+
+    loadWishlist();
+    loadCart();
+    updateWishlistCount();
+
+    const featuredProducts = products.filter((product) => product.featured);
+    const newArrivalProducts = products.filter((product) => product.newArrival);
+    renderProducts(featuredProducts, featuredProductsGrid);
+    renderProducts(newArrivalProducts, newArrivalsGrid);
+    updateShopProducts();
+    renderWishlist();
+    updateWishlistButtons();
+    updateCartViews();
+    setCatalogStatus("");
+  } catch {
+    products = [];
+    featuredProductsGrid.replaceChildren();
+    newArrivalsGrid.replaceChildren();
+    shopProductsGrid.replaceChildren();
+    productResultCount.textContent = "";
+    setCatalogStatus(
+      "Products could not be loaded. Please refresh the page to try again.",
+      true,
+    );
+  } finally {
+    setCatalogBusy(false);
+  }
+}
+
 // ============================================
 // Wishlist State
 // ============================================
@@ -298,6 +163,10 @@ let checkoutData = null;
 let pendingOrder = null;
 let isEditingCheckout = false;
 let preparedOrderPayload = null;
+let createdOrder = null;
+let isCreatingOrder = false;
+let pendingPaymentReference = null;
+let isVerifyingPayment = false;
 
 const nigerianStates = [
   "Abia",
@@ -359,11 +228,24 @@ function loadCart() {
         if (!product || !item.size || !item.color) {
           return null;
         }
+        const variant =
+          product.variants.find(
+            (entry) => String(entry.id) === String(item.variantId),
+          ) ||
+          product.variants.find(
+            (entry) =>
+              entry.size === String(item.size) &&
+              entry.color === String(item.color),
+          );
+        if (!variant) {
+          return null;
+        }
         return {
-          key: item.key || getCartItemKey(product.id, item.size, item.color),
+          key: item.key || getCartItemKey(product.id, variant.size, variant.color),
           productId: product.id,
-          size: String(item.size),
-          color: String(item.color),
+          variantId: variant.id,
+          size: variant.size,
+          color: variant.color,
           quantity,
         };
       })
@@ -387,10 +269,27 @@ function getCartProduct(item) {
   );
 }
 
+function getCartVariant(item) {
+  const product = getCartProduct(item);
+  if (!product) {
+    return null;
+  }
+
+  return (
+    product.variants.find(
+      (variant) => String(variant.id) === String(item.variantId),
+    ) ||
+    product.variants.find(
+      (variant) => variant.size === item.size && variant.color === item.color,
+    ) ||
+    null
+  );
+}
+
 function getCartSubtotal() {
   return cart.reduce((subtotal, item) => {
-    const product = getCartProduct(item);
-    return subtotal + (product ? product.price * item.quantity : 0);
+    const variant = getCartVariant(item);
+    return subtotal + (variant ? variant.price * item.quantity : 0);
   }, 0);
 }
 
@@ -403,23 +302,41 @@ function updateCartCount() {
   );
 }
 
-function addToCart(productId, size, color, quantity) {
+function addToCart(productId, variantId, quantity) {
   const product = products.find(
     (entry) => String(entry.id) === String(productId),
   );
-  if (!product || !size || !color) {
-    return;
+  const variant = product?.variants.find(
+    (entry) => String(entry.id) === String(variantId),
+  );
+  if (!product || !variant || !Number.isSafeInteger(quantity) || quantity < 1) {
+    return false;
   }
 
-  const key = getCartItemKey(product.id, size, color);
+  const key = getCartItemKey(product.id, variant.size, variant.color);
   const existingItem = cart.find((item) => item.key === key);
+  if (existingItem && existingItem.quantity + quantity > variant.stock) {
+    return false;
+  }
+  if (!existingItem && quantity > variant.stock) {
+    return false;
+  }
   if (existingItem) {
     existingItem.quantity += quantity;
+    existingItem.variantId = variant.id;
   } else {
-    cart.push({ key, productId: product.id, size, color, quantity });
+    cart.push({
+      key,
+      productId: product.id,
+      variantId: variant.id,
+      size: variant.size,
+      color: variant.color,
+      quantity,
+    });
   }
   saveCart();
   updateCartViews();
+  return true;
 }
 
 function updateCartItemQuantity(key, quantity) {
@@ -427,7 +344,15 @@ function updateCartItemQuantity(key, quantity) {
   if (!item) {
     return;
   }
-  item.quantity = Math.max(1, quantity);
+  const variant = getCartVariant(item);
+  if (!variant || variant.stock < 1) {
+    if (cartPageStatus) cartPageStatus.textContent = "This variant is currently out of stock. Remove it or choose another item.";
+    return;
+  }
+  item.quantity = Math.min(Math.max(1, quantity), variant.stock);
+  if (quantity > variant.stock && cartPageStatus) {
+    cartPageStatus.textContent = `Only ${variant.stock} of this variant are currently available.`;
+  }
   saveCart();
   updateCartViews();
 }
@@ -448,7 +373,7 @@ const nairaFormatter = new Intl.NumberFormat("en-NG", {
 });
 
 function formatPrice(price) {
-  return nairaFormatter.format(price);
+  return nairaFormatter.format(price / 100);
 }
 
 function escapeHtml(value) {
@@ -505,11 +430,12 @@ function renderProducts(
 
 function renderCartItem(item, context) {
   const product = getCartProduct(item);
-  if (!product) {
+  const variant = getCartVariant(item);
+  if (!product || !variant) {
     return "";
   }
 
-  const lineTotal = product.price * item.quantity;
+  const lineTotal = variant.price * item.quantity;
   const pageClass = context === "page" ? " cart-item--page" : "";
   return `
     <article class="cart-item${pageClass}" data-cart-item-key="${escapeHtml(item.key)}">
@@ -518,8 +444,9 @@ function renderCartItem(item, context) {
         <p class="cart-item__category">${escapeHtml(product.category)}</p>
         <h3>${escapeHtml(product.name)}</h3>
         <p class="cart-item__variant">Size: ${escapeHtml(item.size)} &middot; Color: ${escapeHtml(item.color)}</p>
+        ${variant.stock < 1 ? '<p class="cart-item__availability">Currently out of stock.</p>' : item.quantity > variant.stock ? `<p class="cart-item__availability">Only ${variant.stock} currently available.</p>` : ""}
         <div class="cart-item__meta">
-          <span>Unit price: ${formatPrice(product.price)}</span>
+          <span>Unit price: ${formatPrice(variant.price)}</span>
           ${context === "page" ? `<strong>Line total: ${formatPrice(lineTotal)}</strong>` : ""}
         </div>
         <div class="cart-item__actions">
@@ -587,11 +514,12 @@ function renderCheckoutSummary() {
         ${cart
           .map((item) => {
             const product = getCartProduct(item);
-            return product
+            const variant = getCartVariant(item);
+            return product && variant
               ? `<article class="checkout-summary__item">
                 <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.alt)}">
-                <div><h3>${escapeHtml(product.name)}</h3><p>Size: ${escapeHtml(item.size)} · Color: ${escapeHtml(item.color)}</p><p>Qty: ${item.quantity} · ${formatPrice(product.price)}</p></div>
-                <strong>${formatPrice(product.price * item.quantity)}</strong>
+                <div><h3>${escapeHtml(product.name)}</h3><p>Size: ${escapeHtml(item.size)} · Color: ${escapeHtml(item.color)}</p><p>Qty: ${item.quantity} · ${formatPrice(variant.price)}</p></div>
+                <strong>${formatPrice(variant.price * item.quantity)}</strong>
               </article>`
               : "";
           })
@@ -700,11 +628,13 @@ function buildPendingOrder() {
     items: cart
       .map((item) => {
         const product = getCartProduct(item);
-        return product
+        const variant = getCartVariant(item);
+        return product && variant
           ? {
               productId: product.id,
+              productVariantId: variant.id,
               name: product.name,
-              price: product.price,
+              price: variant.price,
               quantity: item.quantity,
               size: item.size,
               color: item.color,
@@ -723,10 +653,8 @@ function buildPendingOrder() {
 function buildOrderPayload() {
   return {
     items: cart.map((item) => ({
-      productId: item.productId,
+      productVariantId: item.variantId,
       quantity: item.quantity,
-      size: item.size,
-      color: item.color,
     })),
     customer: { ...checkoutData.customer },
     shipping: { ...checkoutData.shipping },
@@ -737,7 +665,7 @@ function renderReviewPage() {
   pendingOrder = buildPendingOrder();
   checkoutContent.innerHTML = `
     <div class="checkout-page__header">
-      <button class="checkout-page__return" type="button" data-review-action="edit">&larr; EDIT INFORMATION</button>
+      <button class="checkout-page__return" type="button" data-review-action="edit" ${createdOrder ? "disabled" : ""}>&larr; EDIT INFORMATION</button>
       <h2 id="checkout-title">REVIEW YOUR ORDER</h2>
       <p>Review your information and items before continuing to payment.</p>
     </div>
@@ -765,7 +693,7 @@ function renderReviewPage() {
           <div><dt>Delivery</dt><dd>Calculated at checkout</dd></div>
           <div class="review-summary__total"><dt>Total</dt><dd>${formatPrice(pendingOrder.pricing.total)}</dd></div>
         </dl>
-        <button class="button button-primary" type="button" data-review-action="payment">CONTINUE TO PAYMENT</button>
+        <button class="button button-primary" type="button" data-review-action="payment" ${isCreatingOrder ? "disabled" : ""}>${createdOrder ? "RETRY PAYMENT" : "CONTINUE TO PAYMENT"}</button>
         <a class="button button-secondary" href="#cart-page">RETURN TO CART</a>
         <p class="review-summary__status" id="review-summary-status" role="status" aria-live="polite"></p>
       </aside>
@@ -843,6 +771,219 @@ function handleCheckoutSubmit(event) {
   isEditingCheckout = false;
   pendingOrder = buildPendingOrder();
   renderReviewPage();
+}
+
+async function submitReviewedOrder(button, status) {
+  if (isCreatingOrder) return;
+  isCreatingOrder = true;
+  button.disabled = true;
+  button.textContent = createdOrder ? "CONNECTING TO PAYSTACK…" : "SUBMITTING ORDER…";
+  status.textContent = createdOrder
+    ? "Connecting to the secure payment page…"
+    : "Creating your order securely…";
+  let redirecting = false;
+
+  try {
+    if (!createdOrder) {
+      const orderResponse = await fetch(ORDERS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildOrderPayload()),
+      });
+      const orderResult = await orderResponse.json().catch(() => null);
+      if (!orderResponse.ok || !orderResult?.success || !orderResult.order?.id) {
+        if (orderResponse.status === 400) {
+          status.textContent = "Please check your contact details and selected items, then try again.";
+        } else if (orderResponse.status === 404) {
+          status.textContent = "A selected item is no longer available. Refresh your bag and try again.";
+        } else if (orderResponse.status === 409) {
+          status.textContent = "Some selected items are no longer available in those quantities. Update your bag and try again.";
+        } else {
+          status.textContent = "We could not create your order. Please try again.";
+        }
+        return;
+      }
+      createdOrder = orderResult.order;
+    }
+
+    status.textContent = "Preparing your secure Paystack checkout…";
+    const paymentResponse = await fetch(`${PAYMENTS_API_URL}/initialize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: createdOrder.id }),
+    });
+    const paymentResult = await paymentResponse.json().catch(() => null);
+    const payment = paymentResult?.payment;
+    if (!paymentResponse.ok || !paymentResult?.success || !payment?.authorizationUrl || !payment?.reference) {
+      if (paymentResponse.status === 409 && paymentResult?.code === "inventory_unavailable") {
+        createdOrder = null;
+        checkoutContent.querySelector('[data-review-action="edit"]')?.removeAttribute("disabled");
+        status.textContent = "A selected item became unavailable before payment. You were not charged. Update your bag and try again.";
+      } else if (paymentResponse.status === 409) {
+        status.textContent = "A payment session is already active for this order. Return from Paystack to verify it.";
+      } else if (paymentResponse.status === 503 || paymentResponse.status === 502) {
+        status.textContent = "Your order is saved, but the payment service is unavailable. Please retry shortly.";
+      } else {
+        status.textContent = "Your order is saved, but payment could not be started. Please retry.";
+      }
+      return;
+    }
+
+    let authorizationUrl;
+    try {
+      authorizationUrl = new URL(payment.authorizationUrl);
+    } catch {
+      status.textContent = "Your order is saved, but the payment page returned an invalid link.";
+      return;
+    }
+    if (authorizationUrl.protocol !== "https:" || authorizationUrl.hostname !== "checkout.paystack.com") {
+      status.textContent = "Your order is saved, but the payment page returned an invalid link.";
+      return;
+    }
+
+    pendingPaymentReference = payment.reference;
+    redirecting = true;
+    window.location.assign(authorizationUrl.toString());
+  } catch {
+    status.textContent = createdOrder
+      ? "Your order is saved, but we could not reach the payment service. Please retry."
+      : "We could not reach the order service. Check your connection and try again.";
+  } finally {
+    isCreatingOrder = false;
+    if (!redirecting) {
+      button.disabled = false;
+      button.textContent = createdOrder ? "RETRY PAYMENT" : "CONTINUE TO PAYMENT";
+    }
+  }
+}
+
+function renderPaymentReturn(message, isError = false, payment = null, canRetryPayment = false, showCartLink = false) {
+  checkoutContent.innerHTML = `
+    <div class="checkout-page__header">
+      <h2 id="checkout-title">${isError ? "PAYMENT NOT CONFIRMED" : payment ? "PAYMENT CONFIRMED" : "VERIFYING PAYMENT"}</h2>
+      <p>${escapeHtml(message)}</p>
+    </div>
+    ${payment ? `<div class="review-details"><p>Order: ${escapeHtml(payment.id)}</p><p>Reference: ${escapeHtml(payment.reference)}</p><p>Amount: ${formatPrice(payment.amount)}</p></div>` : ""}
+    ${isError && canRetryPayment && payment ? `<button class="button button-primary" type="button" data-payment-init-retry data-order-id="${escapeHtml(payment.id)}">RETRY PAYMENT</button>` : ""}
+    ${isError && !canRetryPayment && pendingPaymentReference ? '<button class="button button-primary" type="button" data-payment-retry>RETRY VERIFICATION</button>' : ""}
+    ${showCartLink ? '<a class="button button-secondary" href="#cart-page">RETURN TO BAG</a>' : ""}`;
+}
+
+async function verifyReturnedPayment(reference) {
+  if (isVerifyingPayment || !reference) return;
+  isVerifyingPayment = true;
+  pendingPaymentReference = reference;
+  renderPaymentReturn("We are confirming your payment securely with Paystack.");
+
+  try {
+    const response = await fetch(`${PAYMENTS_API_URL}/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reference }),
+    });
+    const result = await response.json().catch(() => null);
+    const payment = result?.payment;
+    if (
+      response.ok && result?.success && payment?.verified === true &&
+      payment.paymentStatus === "success" && payment.orderStatus === "paid"
+    ) {
+      createdOrder = { id: payment.id };
+      cart = [];
+      saveCart();
+      updateCartViews();
+      renderPaymentReturn("Payment confirmed. Your order is now paid.", false, payment);
+      return;
+    }
+
+    if (result?.code === "payment_reconciliation_required") {
+      pendingPaymentReference = null;
+      renderPaymentReturn(
+        "Paystack reported a successful payment, but the inventory reservation had ended. Your order was not marked paid. Contact support with the order and reference details for reconciliation.",
+        true,
+        payment,
+      );
+      return;
+    }
+
+    if (response.status === 409 && payment?.paymentStatus === "failed") {
+      renderPaymentReturn(
+        "Paystack reported that this payment failed. Your order remains unpaid; you can start another payment attempt.",
+        true,
+        payment,
+        true,
+      );
+      return;
+    }
+
+    const message = response.status === 404
+      ? "We could not match this payment reference to an order. Your order has not been marked paid."
+      : response.status === 409
+        ? "Paystack has not confirmed a successful payment for this order. You can retry verification."
+        : "We could not verify your payment right now. Your order has not been marked paid; please retry.";
+    renderPaymentReturn(message, true);
+  } catch {
+    renderPaymentReturn("We could not reach the payment service. Your order has not been marked paid; please retry.", true);
+  } finally {
+    isVerifyingPayment = false;
+  }
+}
+
+async function retryPaystackPayment(orderId) {
+  if (isVerifyingPayment || !orderId) return;
+  isVerifyingPayment = true;
+  renderPaymentReturn("Preparing a new secure payment session…");
+  try {
+    const response = await fetch(`${PAYMENTS_API_URL}/initialize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId }),
+    });
+    const result = await response.json().catch(() => null);
+    const payment = result?.payment;
+    if (!response.ok || !result?.success || !payment?.authorizationUrl || !payment?.reference) {
+      if (result?.code === "inventory_unavailable") {
+        renderPaymentReturn(
+          "Stock changed before payment could be retried. Return to your bag and update the unavailable items.",
+          true,
+          payment,
+          false,
+          true,
+        );
+      } else {
+        renderPaymentReturn("We could not restart payment. Your order is still unpaid; please try again.", true, payment, true);
+      }
+      return;
+    }
+
+    let authorizationUrl;
+    try {
+      authorizationUrl = new URL(payment.authorizationUrl);
+    } catch {
+      renderPaymentReturn("The payment page returned an invalid link. Your order remains unpaid.", true, payment, true);
+      return;
+    }
+    if (authorizationUrl.protocol !== "https:" || authorizationUrl.hostname !== "checkout.paystack.com") {
+      renderPaymentReturn("The payment page returned an invalid link. Your order remains unpaid.", true, payment, true);
+      return;
+    }
+    pendingPaymentReference = payment.reference;
+    window.location.assign(authorizationUrl.toString());
+  } catch {
+    renderPaymentReturn("We could not reach the payment service. Your order remains unpaid; please retry.", true, { id: orderId }, true);
+  } finally {
+    isVerifyingPayment = false;
+  }
+}
+
+function handlePaystackReturn() {
+  const query = new URLSearchParams(window.location.search);
+  const reference = query.get("reference") || query.get("trxref");
+  if (!reference) return;
+
+  pendingPaymentReference = reference;
+  history.replaceState(null, "", `${window.location.pathname}${window.location.hash}`);
+  window.location.hash = "checkout-page";
+  verifyReturnedPayment(reference);
 }
 
 // ============================================
@@ -1066,18 +1207,74 @@ function closeWishlistDrawer() {
 // ============================================
 let previousBodyOverflow = "";
 
-function renderOptionButtons(options, optionType) {
+function renderOptionButtons(options, optionType, selectedValue = "") {
   return options
-    .map(
-      (option, index) => `
+    .map((option) => {
+      const selected = selectedValue
+        ? option === selectedValue
+        : options.length === 1;
+      return `
         <button
-          class="product-modal__option${options.length === 1 && index === 0 ? " is-selected" : ""}"
+          class="product-modal__option${selected ? " is-selected" : ""}"
           type="button"
           data-option-type="${optionType}"
-          aria-pressed="${options.length === 1 && index === 0}"
-        >${escapeHtml(option)}</button>`,
-    )
+          data-option-value="${escapeHtml(option)}"
+          aria-pressed="${selected}"
+        >${escapeHtml(option)}</button>`;
+    })
     .join("");
+}
+
+function getProductColorsForSize(product, size) {
+  return [
+    ...new Set(
+      product.variants
+        .filter((variant) => !size || variant.size === size)
+        .map((variant) => variant.color),
+    ),
+  ];
+}
+
+function updateProductModalVariant(product) {
+  const size = productModalContent.dataset.selectedSize || "";
+  const color = productModalContent.dataset.selectedColor || "";
+  const variant = product.variants.find(
+    (entry) => entry.size === size && entry.color === color,
+  );
+  if (!variant) {
+    delete productModalContent.dataset.variantId;
+    const addButton = productModalContent.querySelector("[data-add-to-cart]");
+    if (addButton) addButton.disabled = true;
+    return null;
+  }
+
+  productModalContent.dataset.variantId = String(variant.id);
+  const key = getCartItemKey(product.id, variant.size, variant.color);
+  const alreadyInCart = cart.find((item) => item.key === key)?.quantity || 0;
+  const availableToAdd = Math.max(0, variant.stock - alreadyInCart);
+  productModalContent.dataset.maxAddQuantity = String(availableToAdd);
+  const addButton = productModalContent.querySelector("[data-add-to-cart]");
+  if (addButton) {
+    addButton.disabled = availableToAdd < 1;
+    addButton.textContent = availableToAdd < 1 ? "OUT OF STOCK" : "ADD TO CART";
+  }
+  const quantityOutput = productModalContent.querySelector("[data-quantity-value]");
+  if (quantityOutput && availableToAdd > 0) {
+    quantityOutput.textContent = String(Math.min(Number(quantityOutput.textContent) || 1, availableToAdd));
+  }
+  const status = productModalContent.querySelector(".product-modal__status");
+  if (status) {
+    status.textContent = availableToAdd < 1
+      ? "No additional stock is available for this variant."
+      : variant.stock <= 3
+        ? `Only ${availableToAdd} available to add.`
+        : "";
+  }
+  const price = productModalContent.querySelector("[data-product-modal-price]");
+  if (price) {
+    price.textContent = formatPrice(variant.price);
+  }
+  return variant;
 }
 
 function openProductModal(productId, trigger) {
@@ -1091,6 +1288,12 @@ function openProductModal(productId, trigger) {
 
   modalTrigger = trigger || null;
   productModalContent.dataset.productId = product.id;
+  const selectedSize = product.sizes.length === 1 ? product.sizes[0] : "";
+  const initialColors = getProductColorsForSize(product, selectedSize);
+  const selectedColor = initialColors.length === 1 ? initialColors[0] : "";
+  productModalContent.dataset.selectedSize = selectedSize;
+  productModalContent.dataset.selectedColor = selectedColor;
+  delete productModalContent.dataset.variantId;
   productModalContent.innerHTML = `
     <div class="product-modal__layout">
       <div class="product-modal__image-wrap">
@@ -1099,18 +1302,18 @@ function openProductModal(productId, trigger) {
       <div class="product-modal__details">
         <p class="product-modal__category">${escapeHtml(product.category)} / ${escapeHtml(product.gender)}</p>
         <h2 id="product-modal-title">${escapeHtml(product.name)}</h2>
-        <p class="product-modal__price">${formatPrice(product.price)}</p>
+        <p class="product-modal__price" data-product-modal-price>${formatPrice(product.price)}</p>
         <p class="product-modal__description">${escapeHtml(product.description)}</p>
         <div class="product-modal__field">
           <h3>SIZE</h3>
           <div class="product-modal__options" role="group" aria-label="Select size">
-            ${renderOptionButtons(product.sizes, "size")}
+            ${renderOptionButtons(product.sizes, "size", selectedSize)}
           </div>
         </div>
         <div class="product-modal__field">
           <h3>COLOR</h3>
           <div class="product-modal__options" role="group" aria-label="Select color">
-            ${renderOptionButtons(product.colors, "color")}
+            ${renderOptionButtons(initialColors, "color", selectedColor)}
           </div>
         </div>
         <div class="product-modal__field product-modal__quantity-field">
@@ -1121,12 +1324,13 @@ function openProductModal(productId, trigger) {
             <button type="button" data-quantity-action="increase" aria-label="Increase quantity">+</button>
           </div>
         </div>
-        <button class="button button-primary product-modal__add" type="button" data-add-to-cart>
-          ADD TO CART
+        <button class="button button-primary product-modal__add" type="button" data-add-to-cart${product.variants.length ? "" : " disabled"}>
+          ${product.variants.length ? "ADD TO CART" : "UNAVAILABLE"}
         </button>
-        <p class="product-modal__status" role="status" aria-live="polite"></p>
+        <p class="product-modal__status" role="status" aria-live="polite">${product.variants.length ? "" : "No active variants are available."}</p>
       </div>
     </div>`;
+  updateProductModalVariant(product);
 
   previousBodyOverflow = document.body.style.overflow;
   productModal.hidden = false;
@@ -1214,11 +1418,37 @@ document.addEventListener("click", (event) => {
   const optionButton = event.target.closest("[data-option-type]");
   if (optionButton) {
     const optionGroup = optionButton.parentElement;
+    const product = products.find(
+      (item) => String(item.id) === productModalContent.dataset.productId,
+    );
     optionGroup.querySelectorAll("[data-option-type]").forEach((button) => {
       const isSelected = button === optionButton;
       button.classList.toggle("is-selected", isSelected);
       button.setAttribute("aria-pressed", String(isSelected));
     });
+
+    if (product && optionButton.dataset.optionType === "size") {
+      const size = optionButton.dataset.optionValue;
+      productModalContent.dataset.selectedSize = size;
+      const colors = getProductColorsForSize(product, size);
+      const currentColor = productModalContent.dataset.selectedColor;
+      const color = colors.includes(currentColor)
+        ? currentColor
+        : colors.length === 1
+          ? colors[0]
+          : "";
+      productModalContent.dataset.selectedColor = color;
+      productModalContent.querySelector(
+        '[data-option-type="color"]',
+      ).parentElement.innerHTML = renderOptionButtons(colors, "color", color);
+    } else if (product) {
+      productModalContent.dataset.selectedColor =
+        optionButton.dataset.optionValue;
+    }
+
+    if (product) {
+      updateProductModalVariant(product);
+    }
     return;
   }
 
@@ -1231,35 +1461,33 @@ document.addEventListener("click", (event) => {
     const direction =
       quantityButton.dataset.quantityAction === "increase" ? 1 : -1;
     quantityOutput.textContent = String(
-      Math.max(1, currentQuantity + direction),
+      Math.min(
+        Math.max(1, currentQuantity + direction),
+        Number(productModalContent.dataset.maxAddQuantity) || 1,
+      ),
     );
     return;
   }
 
   if (event.target.closest("[data-add-to-cart]")) {
-    const selectedSize = productModalContent.querySelector(
-      '[data-option-type="size"].is-selected',
-    );
-    const selectedColor = productModalContent.querySelector(
-      '[data-option-type="color"].is-selected',
-    );
     const quantity = Number(
       productModalContent.querySelector("[data-quantity-value]").textContent,
     );
     const status = productModalContent.querySelector(".product-modal__status");
 
-    if (!selectedSize || !selectedColor) {
-      status.textContent = "Please select a size and color.";
+    if (!productModalContent.dataset.variantId) {
+      status.textContent = "Please select an available size and color.";
       return;
     }
 
-    addToCart(
+    const added = addToCart(
       productModalContent.dataset.productId,
-      selectedSize.textContent,
-      selectedColor.textContent,
+      productModalContent.dataset.variantId,
       quantity,
     );
-    status.textContent = "Added to your shopping bag.";
+    status.textContent = added
+      ? "Added to your shopping bag."
+      : "The requested quantity is no longer available. Update your bag and try again.";
     return;
   }
 
@@ -1280,23 +1508,33 @@ document.addEventListener("click", (event) => {
     return;
   }
 
+  if (event.target.closest("[data-payment-retry]")) {
+    verifyReturnedPayment(pendingPaymentReference);
+    return;
+  }
+
+  const paymentRetryAction = event.target.closest("[data-payment-init-retry]");
+  if (paymentRetryAction) {
+    retryPaystackPayment(paymentRetryAction.dataset.orderId);
+    return;
+  }
+
   const reviewAction = event.target.closest("[data-review-action]");
   if (reviewAction) {
     if (reviewAction.dataset.reviewAction === "edit") {
+      if (createdOrder || isCreatingOrder) return;
       isEditingCheckout = true;
       renderCheckoutPage();
     } else if (reviewAction.dataset.reviewAction === "payment") {
       const reviewStatus = document.querySelector("#review-summary-status");
+      const submitButton = reviewAction;
+      if (!reviewStatus || isCreatingOrder) return;
       if (!cart.length || !checkoutData || !pendingOrder) {
         reviewStatus.textContent =
           "Please complete checkout information before continuing.";
         return;
       }
-      preparedOrderPayload = buildOrderPayload();
-      // No request is sent yet. Backend order creation and payment initialization
-      // will be connected after server-side validation is implemented.
-      reviewStatus.textContent =
-        "READY FOR PAYMENT. Your order information has been reviewed successfully. Backend payment initialization will be connected in the next stage.";
+      submitReviewedOrder(submitButton, reviewStatus);
     }
     return;
   }
@@ -1359,19 +1597,4 @@ document.addEventListener("input", (event) => {
 // ============================================
 // Initialization
 // ============================================
-loadWishlist();
-loadCart();
-updateWishlistCount();
-const featuredProducts = products.filter(
-  (product) => product.featured === true,
-);
-const newArrivalProducts = products.filter(
-  (product) => product.newArrival === true,
-);
-
-renderProducts(featuredProducts, featuredProductsGrid);
-renderProducts(newArrivalProducts, newArrivalsGrid);
-updateShopProducts();
-renderWishlist();
-updateWishlistButtons();
-updateCartViews();
+loadProducts().then(handlePaystackReturn);

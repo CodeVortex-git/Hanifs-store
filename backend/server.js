@@ -31,6 +31,7 @@ const express = require("express");
 const cors = require("cors");
 const ordersRouter = require("./routes/orders");
 const paymentsRouter = require("./routes/payments");
+const productsRouter = require("./routes/products");
 
 const app = express();
 const port = Number(process.env.PORT) || 5000;
@@ -42,6 +43,7 @@ const port = Number(process.env.PORT) || 5000;
 const DEFAULT_DEV_ORIGINS = [
   "http://localhost:3000",
   "http://localhost:5500",
+  "http://127.0.0.1:8080",
   "http://127.0.0.1:3000",
   "http://127.0.0.1:5500",
 ];
@@ -68,7 +70,17 @@ app.use(
   }),
 );
 
-app.use(express.json());
+app.use(
+  express.json({
+    verify(req, _res, buffer) {
+      // Paystack signs the exact request bytes. Keep those bytes only for its
+      // webhook while leaving the parsed JSON behavior unchanged elsewhere.
+      if (req.path === "/api/payments/webhook") {
+        req.rawBody = Buffer.from(buffer);
+      }
+    },
+  }),
+);
 
 app.get("/api/health", (_req, res) => {
   res.json({
@@ -79,6 +91,7 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/orders", ordersRouter);
 app.use("/api/payments", paymentsRouter);
+app.use("/api/products", productsRouter);
 
 // Unknown API routes return JSON rather than Express's default HTML page.
 app.use("/api", (_req, res) => {
@@ -90,8 +103,6 @@ app.use("/api", (_req, res) => {
 
 // Final error handler: always JSON, and never a stack trace or internal detail.
 app.use((error, _req, res, _next) => {
-  console.error(error);
-
   if (error && error.type === "entity.parse.failed") {
     res.status(400).json({
       success: false,
@@ -99,6 +110,8 @@ app.use((error, _req, res, _next) => {
     });
     return;
   }
+
+  console.error(error);
 
   res.status(500).json({
     success: false,

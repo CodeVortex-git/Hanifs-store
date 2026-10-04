@@ -9,11 +9,13 @@ const express = require("express");
 const {
   initializePayment,
   verifyPayment,
+  handlePaystackWebhook,
 } = require("../controllers/paymentController");
 
 const router = express.Router();
 
 router.post("/initialize", initializePayment);
 router.post("/verify", verifyPayment);
+router.post("/webhook", handlePaystackWebhook);
 
 module.exports = router;

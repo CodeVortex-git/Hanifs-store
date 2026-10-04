@@ -1,25 +1,108 @@
-// Paystack service — server-side only.
-//
-// CREDENTIALS: Paystack credentials will eventually be read from backend
-// environment variables (PAYSTACK_SECRET_KEY, and PAYSTACK_PUBLIC_KEY only if a
-// browser-safe key is ever needed). The secret key must never be imported into,
-// serialized to, or referenced by any frontend code. Do not hardcode a key in
-// this file or in any other source file; the placeholder lives in
-// backend/.env.example and the real value belongs in an untracked local .env.
-//
-// This milestone performs NO network calls. Both functions below are structural
-// placeholders so the future payment milestone has a defined integration point.
-// They intentionally throw rather than returning a fabricated success payload,
-// because a simulated success could be mistaken for a real charge.
+const PAYSTACK_API_BASE = "https://api.paystack.co";
 
-// Amounts are expected in the currency subunit (kobo for NGN) when the real
-// request is implemented.
-async function initializeTransaction() {
-  throw new Error("Paystack initialization is not active yet.");
+class PaystackServiceError extends Error {
+  constructor(message, { status = 502, retryable = false } = {}) {
+    super(message);
+    this.name = "PaystackServiceError";
+    this.status = status;
+    this.retryable = retryable;
+  }
 }
 
-async function verifyTransaction() {
-  throw new Error("Paystack verification is not active yet.");
+function getSecretKey() {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY;
+  if (!secretKey || secretKey === "your_secret_key_here") {
+    throw new PaystackServiceError("Payment service is not configured.", {
+      status: 503,
+    });
+  }
+  return secretKey;
 }
 
-module.exports = { initializeTransaction, verifyTransaction };
+async function requestPaystack(path, options = {}) {
+  const secretKey = getSecretKey();
+  let response;
+  try {
+    response = await fetch(`${PAYSTACK_API_BASE}${path}`, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        ...(options.headers || {}),
+      },
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch {
+    throw new PaystackServiceError(
+      "Payment provider could not be reached. Please try again.",
+      { retryable: true },
+    );
+  }
+
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new PaystackServiceError("Payment provider returned an invalid response.");
+  }
+
+  if (!response.ok || payload?.status !== true || !payload.data) {
+    throw new PaystackServiceError("Payment provider could not process the request.");
+  }
+  return payload.data;
+}
+
+async function initializeTransaction({ email, amount, currency, reference }) {
+  const callbackUrl = process.env.PAYSTACK_CALLBACK_URL;
+  const payload = await requestPaystack("/transaction/initialize", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email,
+      amount: String(amount),
+      currency,
+      reference,
+      ...(callbackUrl ? { callback_url: callbackUrl } : {}),
+    }),
+  });
+
+  let authorizationUrl;
+  try {
+    authorizationUrl = new URL(payload.authorization_url);
+  } catch {
+    throw new PaystackServiceError("Payment provider returned an invalid checkout URL.");
+  }
+  if (
+    authorizationUrl.protocol !== "https:" ||
+    authorizationUrl.hostname !== "checkout.paystack.com" ||
+    typeof payload.reference !== "string" ||
+    !payload.reference
+  ) {
+    throw new PaystackServiceError("Payment provider returned invalid checkout details.");
+  }
+
+  return {
+    authorizationUrl: authorizationUrl.toString(),
+    reference: payload.reference,
+  };
+}
+
+async function verifyTransaction(reference) {
+  const payload = await requestPaystack(
+    `/transaction/verify/${encodeURIComponent(reference)}`,
+    { method: "GET" },
+  );
+
+  return {
+    status: payload.status,
+    reference: payload.reference,
+    amount: payload.amount,
+    currency: payload.currency,
+    transactionId: payload.id,
+  };
+}
+
+module.exports = {
+  initializeTransaction,
+  verifyTransaction,
+  PaystackServiceError,
+};
