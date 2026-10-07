@@ -15,6 +15,41 @@ const API_BASE_URL = String(
 const PRODUCTS_API_URL = `${API_BASE_URL}/api/products`;
 const ORDERS_API_URL = `${API_BASE_URL}/api/orders`;
 const PAYMENTS_API_URL = `${API_BASE_URL}/api/payments`;
+const AUTH_API_URL = `${API_BASE_URL}/api/auth`;
+
+let authCsrfToken = null;
+let currentUser = null;
+let authStatus = "loading";
+let authError = null;
+const authStateReady = (async () => {
+  try {
+    const response = await fetch(`${AUTH_API_URL}/me`, {
+      headers: { Accept: "application/json" },
+      credentials: "include",
+    });
+    if (response.status === 401) {
+      authStatus = "signed-out";
+      return;
+    }
+    if (!response.ok) throw new Error("Account status is temporarily unavailable.");
+    const result = await response.json();
+    if (!result?.success || !result.user) throw new Error("Account status is temporarily unavailable.");
+    currentUser = result.user;
+    authCsrfToken = typeof result?.csrfToken === "string" ? result.csrfToken : null;
+    authStatus = "signed-in";
+  } catch {
+    authError = "We could not check your account right now. You can still shop and check out as a guest.";
+    authStatus = "error";
+  }
+})();
+
+async function authenticatedRequestHeaders(headers = {}) {
+  await authStateReady;
+  return {
+    ...headers,
+    ...(authCsrfToken ? { "X-CSRF-Token": authCsrfToken } : {}),
+  };
+}
 
 // ============================================
 // DOM Elements
@@ -54,7 +89,366 @@ const cartPageTotal = document.querySelector("#cart-page-total");
 const cartPageCheckout = document.querySelector("#cart-page-checkout");
 const cartPageStatus = document.querySelector("#cart-page-status");
 const checkoutContent = document.querySelector("#checkout-content");
+const accountContent = document.querySelector("#account-content");
+let accountAuthMode = "login";
+let accountFeedback = "";
+let orderHistoryState = "idle";
+let orderHistoryError = "";
+let customerOrders = [];
+let orderHistoryPage = 1;
+let orderHistoryPagination = { page: 1, limit: 10, total: 0, totalPages: 0 };
+let selectedOrderId = null;
+let selectedOrder = null;
+let selectedOrderState = "idle";
+let selectedOrderError = "";
+let orderHistoryRequestId = 0;
+let orderDetailRequestId = 0;
 let modalTrigger = null;
+
+function renderAccountView() {
+  if (!accountContent) return;
+  accountContent.setAttribute("aria-busy", String(authStatus === "loading"));
+  if (authStatus === "loading") {
+    accountContent.innerHTML = '<p class="account-page__loading" role="status">Loading your account…</p>';
+    return;
+  }
+
+  const header = `
+    <div class="account-page__header">
+      <p class="account-page__eyebrow">HANIF'S STORE</p>
+      <h2 id="account-title">YOUR ACCOUNT</h2>
+      <p>Manage your profile and account access.</p>
+    </div>`;
+
+  if (authStatus === "signed-in" && currentUser) {
+    accountContent.innerHTML = `${header}
+      <section class="account-card" aria-labelledby="account-profile-title">
+        <div class="account-card__heading">
+          <div><h3 id="account-profile-title">Profile details</h3><p>Signed in as ${escapeHtml(currentUser.email)}</p></div>
+          <button class="button button-secondary account-logout" type="button" data-account-logout>LOG OUT</button>
+        </div>
+        <form class="account-form" id="account-profile-form">
+          <div class="checkout-form__grid">
+            <div class="checkout-field"><label for="account-first-name">First name</label><input id="account-first-name" name="firstName" autocomplete="given-name" maxlength="100" required value="${escapeHtml(currentUser.firstName || "")}"></div>
+            <div class="checkout-field"><label for="account-last-name">Last name</label><input id="account-last-name" name="lastName" autocomplete="family-name" maxlength="100" required value="${escapeHtml(currentUser.lastName || "")}"></div>
+            <div class="checkout-field account-form__field--full"><label for="account-phone">Phone number</label><input id="account-phone" name="phone" type="tel" autocomplete="tel" maxlength="20" value="${escapeHtml(currentUser.phone || "")}"><small>Optional</small></div>
+          </div>
+          <button class="button button-primary" type="submit">SAVE PROFILE</button>
+          <p class="account-page__status" role="status" aria-live="polite">${escapeHtml(accountFeedback)}</p>
+        </form>
+      </section>
+      ${renderOrderHistory()}`;
+    return;
+  }
+
+  const loadError = authStatus === "error"
+    ? `<div class="account-page__notice" role="status"><p>${escapeHtml(authError || "Account status is temporarily unavailable.")}</p><button class="account-page__retry" type="button" data-account-refresh>TRY AGAIN</button></div>`
+    : "";
+  const feedback = accountFeedback
+    ? `<p class="account-page__status" role="status" aria-live="polite">${escapeHtml(accountFeedback)}</p>`
+    : "";
+
+  const form = accountAuthMode === "register" ? `
+    <form class="account-form" id="account-register-form">
+      <div class="checkout-form__grid">
+        <div class="checkout-field"><label for="account-register-first-name">First name</label><input id="account-register-first-name" name="firstName" autocomplete="given-name" maxlength="100" required></div>
+        <div class="checkout-field"><label for="account-register-last-name">Last name</label><input id="account-register-last-name" name="lastName" autocomplete="family-name" maxlength="100" required></div>
+        <div class="checkout-field account-form__field--full"><label for="account-register-email">Email address</label><input id="account-register-email" name="email" type="email" autocomplete="email" maxlength="255" required></div>
+        <div class="checkout-field account-form__field--full"><label for="account-register-phone">Phone number <span>(optional)</span></label><input id="account-register-phone" name="phone" type="tel" autocomplete="tel" maxlength="20"></div>
+        <div class="checkout-field account-form__field--full"><label for="account-register-password">Password</label><input id="account-register-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required><small>Use at least 12 characters.</small></div>
+      </div>
+      <button class="button button-primary" type="submit">CREATE ACCOUNT</button>
+      ${feedback}
+      <p class="account-form__switch">Already have an account? <button type="button" data-account-mode="login">Sign in</button></p>
+    </form>` : `
+    <form class="account-form" id="account-login-form">
+      <div class="checkout-field"><label for="account-login-email">Email address</label><input id="account-login-email" name="email" type="email" autocomplete="email" maxlength="255" required></div>
+      <div class="checkout-field"><label for="account-login-password">Password</label><input id="account-login-password" name="password" type="password" autocomplete="current-password" minlength="12" maxlength="128" required></div>
+      <button class="button button-primary" type="submit">SIGN IN</button>
+      ${feedback}
+      <p class="account-form__switch">New to Hanif's Store? <button type="button" data-account-mode="register">Create an account</button></p>
+    </form>`;
+
+  accountContent.innerHTML = `${header}${loadError}
+    <section class="account-card account-card--signed-out" aria-labelledby="account-access-title">
+      <h3 id="account-access-title">${accountAuthMode === "register" ? "Create your account" : "Welcome back"}</h3>
+      <p class="account-card__intro">Sign in to manage your profile. Guest shopping and checkout remain available.</p>
+      ${form}
+    </section>`;
+}
+
+function resetOrderHistory() {
+  orderHistoryRequestId += 1;
+  orderDetailRequestId += 1;
+  orderHistoryState = "idle";
+  orderHistoryError = "";
+  customerOrders = [];
+  orderHistoryPage = 1;
+  orderHistoryPagination = { page: 1, limit: 10, total: 0, totalPages: 0 };
+  selectedOrderId = null;
+  selectedOrder = null;
+  selectedOrderState = "idle";
+  selectedOrderError = "";
+}
+
+function formatOrderDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Date unavailable";
+  return new Intl.DateTimeFormat("en-NG", { dateStyle: "medium" }).format(date);
+}
+
+function renderOrderHistory() {
+  let content;
+  if (orderHistoryState === "idle" || orderHistoryState === "loading") {
+    content = '<p class="account-orders__message" role="status">Loading your orders…</p>';
+  } else if (orderHistoryState === "error") {
+    content = `<div class="account-orders__message" role="alert"><p>${escapeHtml(orderHistoryError)}</p><button class="account-page__retry" type="button" data-orders-retry>TRY AGAIN</button></div>`;
+  } else if (customerOrders.length === 0) {
+    content = '<div class="account-orders__empty"><p>You haven\'t placed any orders yet.</p><a class="button button-secondary" href="#shop">CONTINUE SHOPPING</a></div>';
+  } else {
+    const orderRows = customerOrders.map((order) => `
+      <article class="account-order${order.id === selectedOrderId ? " is-selected" : ""}">
+        <button type="button" class="account-order__summary" data-order-select="${escapeHtml(order.id)}" aria-expanded="${order.id === selectedOrderId}">
+          <span class="account-order__identity"><strong>Order ${escapeHtml(order.id)}</strong><small>${escapeHtml(formatOrderDate(order.createdAt))}</small></span>
+          <span class="account-order__state"><span>${escapeHtml(String(order.orderStatus).replaceAll("_", " "))}</span><small>Payment: ${escapeHtml(String(order.paymentStatus).replaceAll("_", " "))}</small></span>
+          <strong class="account-order__total">${formatPrice(order.totalAmount)}</strong>
+          <span class="account-order__view">${order.id === selectedOrderId ? "HIDE DETAILS" : "VIEW DETAILS"}</span>
+        </button>
+      </article>`).join("");
+    let detail = '<p class="account-order__detail-placeholder">Select an order to see its details.</p>';
+    if (selectedOrderId) {
+      if (selectedOrderState === "loading") {
+        detail = '<p class="account-order__detail-placeholder" role="status">Loading order details…</p>';
+      } else if (selectedOrderState === "error") {
+        detail = `<p class="account-order__detail-placeholder" role="alert">${escapeHtml(selectedOrderError)}</p>`;
+      } else if (selectedOrder) {
+        const address = [selectedOrder.shippingAddress, selectedOrder.city, selectedOrder.state, selectedOrder.country]
+          .filter(Boolean).map(escapeHtml).join(", ");
+        detail = `
+          <div class="account-order__details">
+            <dl class="account-order__totals">
+              <div><dt>Subtotal</dt><dd>${formatPrice(selectedOrder.subtotal)}</dd></div>
+              <div><dt>Delivery</dt><dd>${formatPrice(selectedOrder.deliveryAmount)}</dd></div>
+              <div><dt>Total</dt><dd>${formatPrice(selectedOrder.totalAmount)}</dd></div>
+            </dl>
+            <h4>Items</h4>
+            <ul>${selectedOrder.items.map((item) => `<li><span>${escapeHtml(item.productName)} · ${escapeHtml(item.selectedSize)} / ${escapeHtml(item.selectedColor)} × ${item.quantity}</span><strong>${formatPrice(item.lineTotal)}</strong></li>`).join("")}</ul>
+            <p class="account-order__shipping"><strong>Delivery address</strong><br>${address}</p>
+          </div>`;
+      }
+    }
+    const { page, totalPages } = orderHistoryPagination;
+    const pagination = totalPages > 1 ? `
+      <nav class="account-orders__pagination" aria-label="Order history pages">
+        <button class="button button-secondary" type="button" data-orders-page="${page - 1}" ${page <= 1 ? "disabled" : ""}>PREVIOUS</button>
+        <span>Page ${page} of ${totalPages}</span>
+        <button class="button button-secondary" type="button" data-orders-page="${page + 1}" ${page >= totalPages ? "disabled" : ""}>NEXT</button>
+      </nav>` : "";
+    content = `<div class="account-orders__layout"><div class="account-orders__list">${orderRows}${pagination}</div><section class="account-order__detail-panel" aria-label="Selected order details">${detail}</section></div>`;
+  }
+
+  return `<section class="account-orders" aria-labelledby="account-orders-title">
+    <div class="account-orders__heading"><div><p class="account-page__eyebrow">YOUR PURCHASES</p><h3 id="account-orders-title">Order history</h3></div>${orderHistoryState === "ready" && orderHistoryPagination.total ? `<p>${orderHistoryPagination.total} order${orderHistoryPagination.total === 1 ? "" : "s"}</p>` : ""}</div>
+    ${content}
+  </section>`;
+}
+
+function updateOrderHistoryView() {
+  const existing = accountContent?.querySelector(".account-orders");
+  if (existing) existing.outerHTML = renderOrderHistory();
+}
+
+async function loadCustomerOrders(page = orderHistoryPage) {
+  if (authStatus !== "signed-in" || !currentUser) return;
+  const requestedUserId = currentUser.id;
+  const requestId = ++orderHistoryRequestId;
+  orderHistoryPage = page;
+  orderHistoryState = "loading";
+  orderHistoryError = "";
+  selectedOrderId = null;
+  selectedOrder = null;
+  selectedOrderState = "idle";
+  updateOrderHistoryView();
+  try {
+    const response = await fetch(`${ORDERS_API_URL}?page=${encodeURIComponent(page)}&limit=10`, {
+      headers: { Accept: "application/json" },
+      credentials: "include",
+    });
+    if (requestId !== orderHistoryRequestId || authStatus !== "signed-in" || currentUser?.id !== requestedUserId) return;
+    if (response.status === 401) {
+      resetOrderHistory();
+      clearAccountSession("signed-out", "Your session expired. Please sign in again.");
+      return;
+    }
+    const result = await response.json().catch(() => null);
+    if (!response.ok || !result?.success || !Array.isArray(result.orders)) {
+      throw new Error(result?.message || "We could not load your order history. Please try again.");
+    }
+    customerOrders = result.orders;
+    orderHistoryPagination = result.pagination || { page, limit: 10, total: customerOrders.length, totalPages: 1 };
+    orderHistoryState = "ready";
+  } catch (error) {
+    if (requestId !== orderHistoryRequestId || authStatus !== "signed-in" || currentUser?.id !== requestedUserId) return;
+    orderHistoryState = "error";
+    orderHistoryError = error instanceof TypeError
+      ? "We could not reach the order service. Please try again."
+      : error.message;
+  }
+  updateOrderHistoryView();
+}
+
+async function loadCustomerOrderDetails(orderId) {
+  if (!customerOrders.some((order) => order.id === orderId)) return;
+  if (selectedOrderId === orderId && selectedOrderState === "ready") {
+    selectedOrderId = null;
+    selectedOrder = null;
+    selectedOrderState = "idle";
+    updateOrderHistoryView();
+    return;
+  }
+  selectedOrderId = orderId;
+  selectedOrder = null;
+  selectedOrderState = "loading";
+  selectedOrderError = "";
+  const requestedUserId = currentUser?.id;
+  const requestId = ++orderDetailRequestId;
+  updateOrderHistoryView();
+  try {
+    const response = await fetch(`${ORDERS_API_URL}/${encodeURIComponent(orderId)}`, {
+      headers: { Accept: "application/json" },
+      credentials: "include",
+    });
+    if (requestId !== orderDetailRequestId || selectedOrderId !== orderId || authStatus !== "signed-in" || currentUser?.id !== requestedUserId) return;
+    if (response.status === 401) {
+      resetOrderHistory();
+      clearAccountSession("signed-out", "Your session expired. Please sign in again.");
+      return;
+    }
+    const result = await response.json().catch(() => null);
+    if (response.status === 404) throw new Error("This order is not available in your account.");
+    if (!response.ok || !result?.success || !result.order) {
+      throw new Error(result?.message || "We could not load this order. Please try again.");
+    }
+    selectedOrder = result.order;
+    selectedOrderState = "ready";
+  } catch (error) {
+    if (requestId !== orderDetailRequestId || selectedOrderId !== orderId || authStatus !== "signed-in" || currentUser?.id !== requestedUserId) return;
+    selectedOrderState = "error";
+    selectedOrderError = error instanceof TypeError
+      ? "We could not reach the order service. Please try again."
+      : error.message;
+  }
+  updateOrderHistoryView();
+}
+
+function openAccountView() {
+  renderAccountView();
+  if (authStatus === "signed-in" && orderHistoryState === "idle") loadCustomerOrders(1);
+}
+
+function clearAccountSession(status, feedback = "") {
+  resetOrderHistory();
+  currentUser = null;
+  authCsrfToken = null;
+  authStatus = status;
+  accountFeedback = feedback;
+  renderAccountView();
+}
+
+async function refreshAccountState() {
+  authStatus = "loading";
+  authError = null;
+  accountFeedback = "";
+  renderAccountView();
+  try {
+    const response = await fetch(`${AUTH_API_URL}/me`, {
+      headers: { Accept: "application/json" },
+      credentials: "include",
+    });
+    if (response.status === 401) {
+      clearAccountSession("signed-out");
+      return;
+    }
+    if (!response.ok) throw new Error("We could not check your account right now. Please try again.");
+    const result = await response.json();
+    if (!result?.success || !result.user) throw new Error("We could not check your account right now. Please try again.");
+    currentUser = result.user;
+    authCsrfToken = typeof result.csrfToken === "string" ? result.csrfToken : null;
+    authStatus = "signed-in";
+    resetOrderHistory();
+  } catch {
+    authStatus = "error";
+    authError = "We could not check your account right now. You can still shop and check out as a guest.";
+  }
+  renderAccountView();
+  if (authStatus === "signed-in") loadCustomerOrders(1);
+}
+
+async function handleAccountSubmit(event) {
+  const form = event.target;
+  const isProfile = form.id === "account-profile-form";
+  const isRegister = form.id === "account-register-form";
+  if (!isProfile && !isRegister && form.id !== "account-login-form") return;
+  event.preventDefault();
+  const submitButton = form.querySelector('[type="submit"]');
+  if (submitButton) submitButton.disabled = true;
+  accountFeedback = "";
+  try {
+    const values = Object.fromEntries(new FormData(form).entries());
+    const endpoint = isProfile ? "/me" : isRegister ? "/register" : "/login";
+    const headers = await authenticatedRequestHeaders({ "Content-Type": "application/json" });
+    const response = await fetch(`${AUTH_API_URL}${endpoint}`, {
+      method: isProfile ? "PATCH" : "POST",
+      headers,
+      credentials: "include",
+      body: JSON.stringify(values),
+    });
+    const result = await response.json().catch(() => null);
+    if (response.status === 401 && isProfile) {
+      clearAccountSession("signed-out", "Your session expired. Please sign in again.");
+      return;
+    }
+    if (!response.ok || !result?.success) {
+      throw new Error(result?.message || "We could not complete that account request.");
+    }
+    if (isProfile) {
+      currentUser = result.user;
+      accountFeedback = "Your profile has been updated.";
+    } else {
+      currentUser = result.user;
+      authCsrfToken = typeof result.csrfToken === "string" ? result.csrfToken : null;
+      authStatus = "signed-in";
+      resetOrderHistory();
+      accountFeedback = isRegister ? "Your account is ready." : "You are signed in.";
+    }
+    authStatus = "signed-in";
+    authError = null;
+    renderAccountView();
+    if (!isProfile) loadCustomerOrders(1);
+  } catch (error) {
+    accountFeedback = error instanceof TypeError
+      ? "We could not reach the account service. Please try again."
+      : error.message;
+    renderAccountView();
+  }
+}
+
+async function logoutAccount() {
+  try {
+    const headers = await authenticatedRequestHeaders({ "Content-Type": "application/json" });
+    const response = await fetch(`${AUTH_API_URL}/logout`, {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) throw new Error("We could not log out. Please try again.");
+    clearAccountSession("signed-out", "You have been logged out.");
+  } catch {
+    accountFeedback = "We could not log out. Please try again.";
+    renderAccountView();
+  }
+}
 
 function mapApiProduct(apiProduct) {
   const variants = (Array.isArray(apiProduct.variants) ? apiProduct.variants : [])
@@ -106,6 +500,7 @@ async function loadProducts() {
   try {
     const response = await fetch(PRODUCTS_API_URL, {
       headers: { Accept: "application/json" },
+      credentials: "include",
     });
     if (!response.ok) {
       throw new Error("Product request failed");
@@ -785,9 +1180,11 @@ async function submitReviewedOrder(button, status) {
 
   try {
     if (!createdOrder) {
+      const orderHeaders = await authenticatedRequestHeaders({ "Content-Type": "application/json" });
       const orderResponse = await fetch(ORDERS_API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: orderHeaders,
+        credentials: "include",
         body: JSON.stringify(buildOrderPayload()),
       });
       const orderResult = await orderResponse.json().catch(() => null);
@@ -807,9 +1204,11 @@ async function submitReviewedOrder(button, status) {
     }
 
     status.textContent = "Preparing your secure Paystack checkout…";
+    const paymentHeaders = await authenticatedRequestHeaders({ "Content-Type": "application/json" });
     const paymentResponse = await fetch(`${PAYMENTS_API_URL}/initialize`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: paymentHeaders,
+      credentials: "include",
       body: JSON.stringify({ orderId: createdOrder.id }),
     });
     const paymentResult = await paymentResponse.json().catch(() => null);
@@ -876,9 +1275,11 @@ async function verifyReturnedPayment(reference) {
   renderPaymentReturn("We are confirming your payment securely with Paystack.");
 
   try {
+    const headers = await authenticatedRequestHeaders({ "Content-Type": "application/json" });
     const response = await fetch(`${PAYMENTS_API_URL}/verify`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
+      credentials: "include",
       body: JSON.stringify({ reference }),
     });
     const result = await response.json().catch(() => null);
@@ -933,9 +1334,11 @@ async function retryPaystackPayment(orderId) {
   isVerifyingPayment = true;
   renderPaymentReturn("Preparing a new secure payment session…");
   try {
+    const headers = await authenticatedRequestHeaders({ "Content-Type": "application/json" });
     const response = await fetch(`${PAYMENTS_API_URL}/initialize`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
+      credentials: "include",
       body: JSON.stringify({ orderId }),
     });
     const result = await response.json().catch(() => null);
@@ -1580,9 +1983,48 @@ cartToggle.addEventListener("click", openCartDrawer);
 cartClose.addEventListener("click", closeCartDrawer);
 cartDrawerBackdrop.addEventListener("click", closeCartDrawer);
 document.addEventListener("submit", (event) => {
+  if (event.target.id === "account-profile-form" || event.target.id === "account-login-form" || event.target.id === "account-register-form") {
+    handleAccountSubmit(event);
+    return;
+  }
   if (event.target.id === "checkout-form") {
     handleCheckoutSubmit(event);
   }
+});
+document.addEventListener("click", (event) => {
+  const orderPageButton = event.target.closest("[data-orders-page]");
+  if (orderPageButton && !orderPageButton.disabled) {
+    loadCustomerOrders(Number(orderPageButton.dataset.ordersPage));
+    return;
+  }
+  const orderSelectButton = event.target.closest("[data-order-select]");
+  if (orderSelectButton) {
+    loadCustomerOrderDetails(orderSelectButton.dataset.orderSelect);
+    return;
+  }
+  if (event.target.closest("[data-orders-retry]")) {
+    loadCustomerOrders(orderHistoryPage);
+    return;
+  }
+  const modeButton = event.target.closest("[data-account-mode]");
+  if (modeButton) {
+    accountAuthMode = modeButton.dataset.accountMode === "register" ? "register" : "login";
+    accountFeedback = "";
+    renderAccountView();
+    return;
+  }
+  if (event.target.closest("[data-account-logout]")) {
+    logoutAccount();
+    return;
+  }
+  if (event.target.closest("[data-account-refresh]")) {
+    refreshAccountState();
+    return;
+  }
+  if (event.target.closest("#account-toggle")) openAccountView();
+});
+window.addEventListener("hashchange", () => {
+  if (window.location.hash === "#account-page") openAccountView();
 });
 document.addEventListener("input", (event) => {
   if (event.target.closest("#checkout-form")) {
@@ -1598,3 +2040,6 @@ document.addEventListener("input", (event) => {
 // Initialization
 // ============================================
 loadProducts().then(handlePaystackReturn);
+authStateReady.then(() => {
+  if (window.location.hash === "#account-page") openAccountView();
+});

@@ -292,7 +292,9 @@ async function seedDatabase() {
           },
         },
         create: variant,
-        update: { price: variant.price, stock: 10, active: true },
+        // Re-running the catalog seed must not overwrite live inventory. Stock
+        // is initialized only when a variant is first inserted.
+        update: { price: variant.price, active: true },
       });
     }
     totalVariants += variants.length;

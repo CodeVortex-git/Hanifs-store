@@ -34,7 +34,7 @@ function sendPaymentError(res, error) {
 
 async function initializePayment(req, res) {
   try {
-    const result = await paymentService.initializePayment(req.body?.orderId);
+    const result = await paymentService.initializePayment(req.body?.orderId, req.auth?.user?.id ?? null);
     res.status(201).json({ success: true, payment: result });
   } catch (error) {
     sendPaymentError(res, error);
@@ -43,7 +43,7 @@ async function initializePayment(req, res) {
 
 async function verifyPayment(req, res) {
   try {
-    const result = await paymentService.verifyPayment(req.body?.reference);
+    const result = await paymentService.verifyPayment(req.body?.reference, req.auth?.user?.id ?? null);
     res.status(200).json({ success: true, payment: result });
   } catch (error) {
     sendPaymentError(res, error);

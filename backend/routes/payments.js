@@ -6,6 +6,7 @@
 // must be confirmed server-side before any order is marked paid.
 
 const express = require("express");
+const { authenticateSession, protectCsrf } = require("../middleware/auth");
 const {
   initializePayment,
   verifyPayment,
@@ -14,8 +15,8 @@ const {
 
 const router = express.Router();
 
-router.post("/initialize", initializePayment);
-router.post("/verify", verifyPayment);
+router.post("/initialize", authenticateSession, protectCsrf, initializePayment);
+router.post("/verify", authenticateSession, protectCsrf, verifyPayment);
 router.post("/webhook", handlePaystackWebhook);
 
 module.exports = router;

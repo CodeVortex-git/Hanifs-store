@@ -2,6 +2,7 @@ const { randomUUID } = require("node:crypto");
 const prisma = require("./prisma");
 const paystackService = require("./paystackService");
 const inventoryService = require("./inventoryService");
+const { ownsResource } = require("../middleware/auth");
 const { ORDER_STATUS, PAYMENT_STATUS } = require("../constants/statuses");
 
 const CURRENCY = "NGN";
@@ -42,13 +43,14 @@ function publicOrderState(order) {
   };
 }
 
-async function initializePayment(rawOrderId) {
+async function initializePayment(rawOrderId, authenticatedUserId = null) {
   const orderId = validateOrderId(rawOrderId);
   await inventoryService.releaseExpiredReservations();
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     select: {
       id: true,
+      userId: true,
       customerEmail: true,
       totalAmount: true,
       orderStatus: true,
@@ -59,6 +61,7 @@ async function initializePayment(rawOrderId) {
   });
 
   if (!order) throw new PaymentServiceError(404, "Order not found.");
+  if (!ownsResource(authenticatedUserId, order.userId)) throw new PaymentServiceError(404, "Order not found.");
   if (!Number.isSafeInteger(order.totalAmount) || order.totalAmount < 1) {
     throw new PaymentServiceError(409, "This order does not have a valid payable amount.");
   }
@@ -159,12 +162,13 @@ async function initializePayment(rawOrderId) {
   };
 }
 
-async function verifyPayment(rawReference) {
+async function verifyPayment(rawReference, authenticatedUserId = null) {
   const reference = validateReference(rawReference);
   const order = await prisma.order.findUnique({
     where: { paymentReference: reference },
     select: {
       id: true,
+      userId: true,
       totalAmount: true,
       orderStatus: true,
       paymentStatus: true,
@@ -173,6 +177,7 @@ async function verifyPayment(rawReference) {
     },
   });
   if (!order) throw new PaymentServiceError(404, "Payment reference not found.");
+  if (!ownsResource(authenticatedUserId, order.userId)) throw new PaymentServiceError(404, "Payment reference not found.");
 
   if (order.paymentStatus === PAYMENT_STATUS.SUCCESS && order.orderStatus === ORDER_STATUS.PAID) {
     return { verified: true, ...publicOrderState(order) };

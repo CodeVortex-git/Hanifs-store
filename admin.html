@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#171613" />
+    <title>Admin Dashboard | HANIF'S STORE</title>
+    <link rel="stylesheet" href="admin.css" />
+    <script src="admin.js" defer></script>
+  </head>
+  <body>
+    <header class="admin-header">
+      <a class="admin-brand" href="admin.html" aria-label="HANIF'S STORE admin home">
+        <span class="admin-brand__mark" aria-hidden="true">H</span>
+        <span><strong>HANIF'S STORE</strong><small>ADMINISTRATION</small></span>
+      </a>
+      <div class="admin-header__actions">
+        <span id="admin-identity" class="admin-identity" hidden></span>
+        <button id="admin-logout" class="button button--quiet" type="button" hidden>Log out</button>
+      </div>
+    </header>
+
+    <nav id="admin-nav" class="admin-nav" aria-label="Admin sections" hidden>
+      <button class="is-active" type="button" data-admin-view="dashboard">Overview</button>
+      <button type="button" data-admin-view="products">Products</button>
+      <button type="button" data-admin-view="inventory">Inventory</button>
+    </nav>
+
+    <main class="admin-main">
+      <section class="admin-intro" aria-labelledby="page-title">
+        <p class="eyebrow">STORE OVERVIEW</p>
+        <h1 id="page-title">Dashboard</h1>
+        <p>A private snapshot of store activity.</p>
+      </section>
+
+      <section id="admin-loading" class="state-card" role="status" aria-live="polite">
+        <span class="loading-mark" aria-hidden="true"></span>
+        <p>Checking administrator access…</p>
+      </section>
+
+      <section id="admin-signed-out" class="state-card sign-in-card" aria-labelledby="sign-in-title" hidden>
+        <p class="eyebrow">RESTRICTED ACCESS</p>
+        <h2 id="sign-in-title">Administrator sign in</h2>
+        <p id="sign-in-message">Sign in with an administrator account to view store metrics.</p>
+        <form id="admin-login-form" class="sign-in-form">
+          <label for="admin-email">Email address</label>
+          <input id="admin-email" name="email" type="email" autocomplete="username" maxlength="255" required />
+          <label for="admin-password">Password</label>
+          <input id="admin-password" name="password" type="password" autocomplete="current-password" minlength="12" maxlength="128" required />
+          <button class="button button--primary" type="submit">Sign in</button>
+        </form>
+        <p class="sign-in-note">Administrator accounts are provisioned privately. Public registration is unavailable.</p>
+      </section>
+
+      <section id="admin-error" class="state-card error-card" role="alert" hidden>
+        <h2>Dashboard could not be loaded</h2>
+        <p id="admin-error-message">Check your connection and try again.</p>
+        <button id="admin-retry" class="button button--secondary" type="button">Try again</button>
+      </section>
+
+      <section id="dashboard-content" aria-label="Store metrics" hidden>
+        <div class="dashboard-heading">
+          <div><p class="eyebrow">AT A GLANCE</p><h2>Store performance</h2></div>
+          <p id="generated-at" class="generated-at"></p>
+        </div>
+        <div class="metric-grid">
+          <article class="metric-card metric-card--accent"><p>Total orders</p><strong id="metric-orders-total">—</strong><span>All orders, including guest checkouts</span></article>
+          <article class="metric-card"><p>Pending orders</p><strong id="metric-orders-pending">—</strong><span>Pending or awaiting payment</span></article>
+          <article class="metric-card"><p>Paid orders</p><strong id="metric-orders-paid">—</strong><span>Payment confirmed</span></article>
+          <article class="metric-card metric-card--revenue"><p>Successful revenue</p><strong id="metric-revenue">—</strong><span>Confirmed payments</span></article>
+          <article class="metric-card"><p>Customers</p><strong id="metric-customers">—</strong><span>Registered customer accounts</span></article>
+          <article class="metric-card"><p>Active products</p><strong id="metric-products">—</strong><span>Available catalog products</span></article>
+          <article class="metric-card metric-card--warning"><p>Low stock variants</p><strong id="metric-low-stock">—</strong><span id="metric-stock-threshold">At or below threshold</span></article>
+        </div>
+      </section>
+
+      <section id="products-content" aria-label="Product management" hidden></section>
+      <section id="inventory-content" aria-label="Inventory management" hidden></section>
+
+      <p id="logout-message" class="logout-message" role="status" aria-live="polite"></p>
+    </main>
+    <footer class="admin-footer"><span>HANIF'S STORE</span><span>Administrator access</span></footer>
+  </body>
+</html>

@@ -3,6 +3,9 @@ const inventoryService = require("./inventoryService");
 const { ORDER_STATUS, PAYMENT_STATUS } = require("../constants/statuses");
 
 const MAX_DATABASE_INT = 2_147_483_647;
+const DEFAULT_ORDER_PAGE_SIZE = 10;
+const MAX_ORDER_PAGE_SIZE = 50;
+const MAX_ORDER_OFFSET = 1_000_000;
 
 class OrderServiceError extends Error {
   constructor(status, message) {
@@ -30,6 +33,9 @@ function requiredText(value, label, maxLength) {
 function validateOrderRequest(body) {
   if (!isRecord(body) || !isRecord(body.customer) || !isRecord(body.shipping)) {
     throw new OrderServiceError(400, "Enter valid customer and shipping details.");
+  }
+  if (Object.hasOwn(body, "userId")) {
+    throw new OrderServiceError(400, "The order user cannot be supplied by the request.");
   }
 
   const email = requiredText(body.customer.email, "email address", 255);
@@ -82,7 +88,10 @@ function validateOrderRequest(body) {
   return { customer, shipping, quantities };
 }
 
-async function createOrder(body) {
+async function createOrder(body, authenticatedUserId = null) {
+  if (authenticatedUserId !== null && (typeof authenticatedUserId !== "string" || !authenticatedUserId)) {
+    throw new OrderServiceError(401, "Authentication is required to create an account order.");
+  }
   const { customer, shipping, quantities } = validateOrderRequest(body);
   // Reclaim expired holds lazily; this project has no background worker.
   await inventoryService.releaseExpiredReservations();
@@ -142,6 +151,7 @@ async function createOrder(body) {
 
     const created = await transaction.order.create({
       data: {
+        userId: authenticatedUserId,
         customerEmail: customer.email,
         firstName: customer.firstName,
         lastName: customer.lastName,
@@ -183,4 +193,108 @@ async function createOrder(body) {
   });
 }
 
-module.exports = { createOrder, OrderServiceError };
+function parsePaginationValue(value, fallback, label, maximum = Number.MAX_SAFE_INTEGER) {
+  if (value === undefined) return fallback;
+  if (typeof value !== "string" || !/^\d+$/.test(value)) {
+    throw new OrderServiceError(400, `Enter a valid ${label}.`);
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > maximum) {
+    throw new OrderServiceError(400, `Enter a valid ${label}.`);
+  }
+  return parsed;
+}
+
+function validateCustomerOrderQuery(authenticatedUserId, query = {}) {
+  if (typeof authenticatedUserId !== "string" || !authenticatedUserId) {
+    throw new OrderServiceError(401, "Authentication is required.");
+  }
+  if (Object.hasOwn(query, "userId")) {
+    throw new OrderServiceError(400, "Customer identity cannot be supplied in the request.");
+  }
+  const page = parsePaginationValue(query.page, 1, "page number");
+  const limit = parsePaginationValue(query.limit, DEFAULT_ORDER_PAGE_SIZE, "page size", MAX_ORDER_PAGE_SIZE);
+  const skip = (page - 1) * limit;
+  if (!Number.isSafeInteger(skip) || skip > MAX_ORDER_OFFSET) {
+    throw new OrderServiceError(400, "The requested page is too large.");
+  }
+  return { page, limit, skip };
+}
+
+const customerOrderListSelect = {
+  id: true,
+  orderStatus: true,
+  paymentStatus: true,
+  createdAt: true,
+  subtotal: true,
+  deliveryAmount: true,
+  totalAmount: true,
+};
+
+const customerOrderDetailSelect = {
+  ...customerOrderListSelect,
+  customerEmail: true,
+  firstName: true,
+  lastName: true,
+  phone: true,
+  shippingAddress: true,
+  city: true,
+  state: true,
+  country: true,
+  items: {
+    select: {
+      productName: true,
+      selectedSize: true,
+      selectedColor: true,
+      quantity: true,
+      unitPrice: true,
+      lineTotal: true,
+    },
+  },
+};
+
+async function listCustomerOrders(authenticatedUserId, query = {}) {
+  const { page, limit, skip } = validateCustomerOrderQuery(authenticatedUserId, query);
+  const where = { userId: authenticatedUserId };
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      select: customerOrderListSelect,
+    }),
+    prisma.order.count({ where }),
+  ]);
+  return {
+    orders,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: total === 0 ? 0 : Math.ceil(total / limit),
+    },
+  };
+}
+
+async function getCustomerOrder(authenticatedUserId, orderId) {
+  if (typeof authenticatedUserId !== "string" || !authenticatedUserId) {
+    throw new OrderServiceError(401, "Authentication is required.");
+  }
+  if (typeof orderId !== "string" || !orderId || orderId.length > 100) {
+    throw new OrderServiceError(404, "Order not found.");
+  }
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, userId: authenticatedUserId },
+    select: customerOrderDetailSelect,
+  });
+  if (!order) throw new OrderServiceError(404, "Order not found.");
+  return order;
+}
+
+module.exports = {
+  createOrder,
+  getCustomerOrder,
+  listCustomerOrders,
+  OrderServiceError,
+};

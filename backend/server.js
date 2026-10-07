@@ -22,13 +22,18 @@
 // e, total, stock figure, and status transition. Treat all
 // request bodies as untrusted input.
 //
-// This milestone stops before real payment processing: no database, no payment
-// provider calls, no authentication, and no persisted orders.
+// Customer identity is derived from the server-side session. Order totals,
+// inventory, payment status, and other sensitive state remain server-owned.
 
 require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const authRouter = require("./routes/auth");
+const adminAuthRouter = require("./routes/adminAuth");
+const adminDashboardRouter = require("./routes/adminDashboard");
+const adminProductsRouter = require("./routes/adminProducts");
+const adminInventoryRouter = require("./routes/adminInventory");
 const ordersRouter = require("./routes/orders");
 const paymentsRouter = require("./routes/payments");
 const productsRouter = require("./routes/products");
@@ -36,10 +41,8 @@ const productsRouter = require("./routes/products");
 const app = express();
 const port = Number(process.env.PORT) || 5000;
 
-// CORS is limited to the local development origins that serve the static
-// frontend. The frontend currently has no fetch() calls, so this only prepares
-// the boundary; there is no permissive production configuration. Update
-// CORS_ORIGINS (comma-separated) when the real deployed origin is known.
+// CORS allows credentials only for the explicit local development origins or
+// CORS_ORIGINS. Never use a wildcard for cookie-authenticated requests.
 const DEFAULT_DEV_ORIGINS = [
   "http://localhost:3000",
   "http://localhost:5500",
@@ -55,6 +58,8 @@ const corsOrigins = (process.env.CORS_ORIGINS || "")
 
 const allowedOrigins =
   corsOrigins.length > 0 ? corsOrigins : DEFAULT_DEV_ORIGINS;
+const allowedOriginSet = new Set(allowedOrigins);
+app.locals.allowedOrigins = allowedOriginSet;
 
 app.use(
   cors({
@@ -67,6 +72,7 @@ app.use(
       }
       callback(null, false);
     },
+    credentials: true,
   }),
 );
 
@@ -89,6 +95,11 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
+app.use("/api/auth", authRouter);
+app.use("/api/admin/auth", adminAuthRouter);
+app.use("/api/admin", adminDashboardRouter);
+app.use("/api/admin/products", adminProductsRouter);
+app.use("/api/admin/inventory", adminInventoryRouter);
 app.use("/api/orders", ordersRouter);
 app.use("/api/payments", paymentsRouter);
 app.use("/api/products", productsRouter);

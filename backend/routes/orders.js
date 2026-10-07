@@ -6,11 +6,13 @@
 // accept a client-supplied price, total, or status.
 
 const express = require("express");
-const { createOrder, getOrder } = require("../controllers/orderController");
+const { createOrder, getOrder, listOrders } = require("../controllers/orderController");
+const { authenticateSession, protectCsrf, requireAuthentication } = require("../middleware/auth");
 
 const router = express.Router();
 
-router.post("/", createOrder);
-router.get("/:id", getOrder);
+router.post("/", authenticateSession, protectCsrf, createOrder);
+router.get("/", authenticateSession, requireAuthentication, listOrders);
+router.get("/:id", authenticateSession, requireAuthentication, getOrder);
 
 module.exports = router;
