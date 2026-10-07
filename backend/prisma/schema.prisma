@@ -75,6 +75,7 @@ model Admin {
 
   sessions             AdminSession[]
   inventoryAdjustments InventoryAdjustment[]
+  statusHistory        OrderStatusHistory[]
 }
 
 model AdminSession {
@@ -167,10 +168,28 @@ model Order {
   createdAt                     DateTime                   @default(now())
   updatedAt                     DateTime                   @updatedAt
 
-  items OrderItem[]
+  items        OrderItem[]
+  statusHistory OrderStatusHistory[]
 
   @@index([inventoryReservationStatus, inventoryReservationExpiresAt])
   @@index([userId, createdAt])
+  @@index([orderStatus, createdAt])
+  @@index([paymentStatus, createdAt])
+}
+
+model OrderStatusHistory {
+  id             String      @id @default(cuid())
+  orderId        String
+  order          Order       @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  adminId        String?
+  admin          Admin?      @relation(fields: [adminId], references: [id], onDelete: Restrict)
+  previousStatus OrderStatus
+  newStatus      OrderStatus
+  reason         String?     @db.VarChar(500)
+  createdAt      DateTime    @default(now())
+
+  @@index([orderId, createdAt])
+  @@index([adminId, createdAt])
 }
 
 model OrderItem {

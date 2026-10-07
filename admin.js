@@ -6,6 +6,7 @@
   const dashboardUrl = `${apiBase}/api/admin/dashboard`;
   const productsUrl = `${apiBase}/api/admin/products`;
   const inventoryUrl = `${apiBase}/api/admin/inventory`;
+  const ordersUrl = `${apiBase}/api/admin/orders`;
   const elements = {
     loading: document.querySelector("#admin-loading"),
     signedOut: document.querySelector("#admin-signed-out"),
@@ -18,6 +19,7 @@
     dashboard: document.querySelector("#dashboard-content"),
     products: document.querySelector("#products-content"),
     inventory: document.querySelector("#inventory-content"),
+    orders: document.querySelector("#orders-content"),
     nav: document.querySelector("#admin-nav"),
     identity: document.querySelector("#admin-identity"),
     logout: document.querySelector("#admin-logout"),
@@ -41,12 +43,22 @@
   let inventorySelected = null;
   let inventoryFeedback = "";
   let inventoryFeedbackKind = "";
+  let ordersPage = 1;
+  const ordersLimit = 20;
+  let ordersQuery = "";
+  let ordersStatus = "all";
+  let ordersPaymentStatus = "all";
+  let ordersFrom = "";
+  let ordersTo = "";
+  let ordersSelected = null;
+  let ordersFeedback = "";
+  let ordersFeedbackKind = "";
 
   function showOnly(target) {
-    for (const panel of [elements.loading, elements.signedOut, elements.error, elements.dashboard, elements.products, elements.inventory]) {
+    for (const panel of [elements.loading, elements.signedOut, elements.error, elements.dashboard, elements.products, elements.inventory, elements.orders]) {
       panel.hidden = panel !== target;
     }
-    elements.nav.hidden = ![elements.dashboard, elements.products, elements.inventory].includes(target);
+    elements.nav.hidden = ![elements.dashboard, elements.products, elements.inventory, elements.orders].includes(target);
   }
 
   function showSignedOut(message = "Sign in with an administrator account to view store metrics.") {
@@ -175,6 +187,203 @@
     if (!value) return "Not scheduled";
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? "Unknown" : new Intl.DateTimeFormat("en-NG", { dateStyle: "medium", timeStyle: "short" }).format(date);
+  }
+
+  function formatOrderStatusLabel(value) {
+    return String(value || "").replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  function formatOrderDate(value) {
+    if (!value) return "—";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "—" : new Intl.DateTimeFormat("en-NG", { dateStyle: "medium", timeStyle: "short" }).format(date);
+  }
+
+  function legalOrderTransitions(status) {
+    const options = {
+      paid: ["processing"],
+      processing: ["shipped"],
+      shipped: ["delivered"],
+    };
+    return options[status] || [];
+  }
+
+  function renderOrders(payload) {
+    const pageCount = Math.max(1, payload.pagination.totalPages || 1);
+    const rows = payload.orders.map((order) => `
+      <article class="orders-row">
+        <div class="orders-row__cell"><strong>#${escapeAdminHtml(order.id.slice(0, 10))}</strong><span>${formatOrderDate(order.createdAt)}</span></div>
+        <div class="orders-row__cell"><strong>${escapeAdminHtml(order.customer.firstName || "Customer")} ${escapeAdminHtml(order.customer.lastName || "")}</strong><span>${escapeAdminHtml(order.customer.email)}</span></div>
+        <div class="orders-row__cell"><strong>${escapeAdminHtml(formatNairaFromKobo(order.totalAmount))}</strong><span>NGN</span></div>
+        <div class="orders-row__cell"><span class="orders-row__status">${escapeAdminHtml(formatOrderStatusLabel(order.orderStatus))}</span></div>
+        <div class="orders-row__cell"><strong>${escapeAdminHtml(formatOrderStatusLabel(order.paymentStatus))}</strong></div>
+        <div class="orders-row__cell"><strong>${escapeAdminHtml(String(order.inventoryReservationStatus || "none"))}</strong>${order.paymentReconciliationRequired ? '<span class="orders-row__warning">Reconciliation</span>' : '<span>OK</span>'}</div>
+        <div class="orders-row__cell">${order.paymentReconciliationRequired ? '<span class="orders-row__warning">Hold</span>' : '<span>Ready</span>'}</div>
+        <button class="button button--secondary" type="button" data-order-open="${escapeAdminHtml(order.id)}">Open</button>
+      </article>`).join("");
+    const detail = ordersSelected ? renderOrderDetail(ordersSelected) : "";
+    elements.orders.innerHTML = `
+      <div class="products-heading"><div><p class="eyebrow">FULFILLMENT</p><h2>Orders</h2><p>Review recent orders, advance fulfillment safely, and inspect immutable status history.</p></div></div>
+      <form id="orders-search-form" class="products-toolbar orders-toolbar">
+        <label>Search<input name="q" type="search" maxlength="100" value="${escapeAdminHtml(ordersQuery)}" placeholder="Order ID, customer name or email"></label>
+        <label>Order status<select name="status"><option value="all" ${ordersStatus === "all" ? "selected" : ""}>All statuses</option><option value="paid" ${ordersStatus === "paid" ? "selected" : ""}>Paid</option><option value="processing" ${ordersStatus === "processing" ? "selected" : ""}>Processing</option><option value="shipped" ${ordersStatus === "shipped" ? "selected" : ""}>Shipped</option><option value="delivered" ${ordersStatus === "delivered" ? "selected" : ""}>Delivered</option></select></label>
+        <label>Payment status<select name="paymentStatus"><option value="all" ${ordersPaymentStatus === "all" ? "selected" : ""}>All payments</option><option value="success" ${ordersPaymentStatus === "success" ? "selected" : ""}>Success</option><option value="pending" ${ordersPaymentStatus === "pending" ? "selected" : ""}>Pending</option><option value="failed" ${ordersPaymentStatus === "failed" ? "selected" : ""}>Failed</option></select></label>
+        <label>From<input name="from" type="date" value="${escapeAdminHtml(ordersFrom)}"></label>
+        <label>To<input name="to" type="date" value="${escapeAdminHtml(ordersTo)}"></label>
+        <button class="button button--secondary" type="submit">Apply</button>
+      </form>
+      <p class="products-feedback ${ordersFeedbackKind ? `products-feedback--${ordersFeedbackKind}` : ""}" role="status" aria-live="polite">${escapeAdminHtml(ordersFeedback)}</p>
+      <div class="orders-list">${rows || '<p class="products-empty">No orders match these filters.</p>'}</div>
+      <div class="products-pagination"><span>${payload.pagination.total} order${payload.pagination.total === 1 ? "" : "s"} · Page ${payload.pagination.page} of ${pageCount}</span><div><button class="button button--secondary" type="button" data-orders-page="${payload.pagination.page - 1}" ${payload.pagination.page <= 1 ? "disabled" : ""}>Previous</button><button class="button button--secondary" type="button" data-orders-page="${payload.pagination.page + 1}" ${payload.pagination.page >= pageCount ? "disabled" : ""}>Next</button></div></div>
+      ${detail}`;
+    updateAdminViewButtons("orders");
+  }
+
+  function renderOrderDetail(detail) {
+    const order = detail.order;
+    const transitionOptions = legalOrderTransitions(order.orderStatus);
+    const disabledReason = order.paymentStatus !== "success" ? "Payment not confirmed." : order.paymentReconciliationRequired ? "Payment reconciliation is required." : "";
+    const history = (order.statusHistory || []).map((entry) => `
+      <article class="order-history-row">
+        <span>${escapeAdminHtml(formatOrderStatusLabel(entry.previousStatus))}</span>
+        <span>${escapeAdminHtml(formatOrderStatusLabel(entry.newStatus))}</span>
+        <span>${escapeAdminHtml(entry.reason || "—")}</span>
+        <span>${escapeAdminHtml(formatOrderDate(entry.createdAt))}</span>
+        <span>${escapeAdminHtml((entry.admin && (entry.admin.displayName || entry.admin.email)) || "System")}</span>
+      </article>`).join("");
+
+    return `
+      <section class="order-detail" aria-label="Order detail">
+        <div class="order-detail__header">
+          <div>
+            <p class="eyebrow">ORDER DETAIL</p>
+            <h3>#${escapeAdminHtml(order.id)}</h3>
+            <p>Placed ${formatOrderDate(order.createdAt)}</p>
+          </div>
+          <div class="order-detail__meta">
+            <span class="orders-row__status">${escapeAdminHtml(formatOrderStatusLabel(order.orderStatus))}</span>
+            <span class="orders-row__status">${escapeAdminHtml(formatOrderStatusLabel(order.paymentStatus))}</span>
+            ${order.paymentReconciliationRequired ? '<span class="orders-row__warning orders-row__status">Reconciliation required</span>' : ''}
+          </div>
+        </div>
+
+        <div class="order-detail__grid">
+          <article class="order-detail__card">
+            <h4>Customer</h4>
+            <dl>
+              <div><dt>Name</dt><dd>${escapeAdminHtml(order.customer.firstName || "-")} ${escapeAdminHtml(order.customer.lastName || "")}</dd></div>
+              <div><dt>Email</dt><dd>${escapeAdminHtml(order.customer.email || "-")}</dd></div>
+              <div><dt>Phone</dt><dd>${escapeAdminHtml(order.customer.phone || "-")}</dd></div>
+            </dl>
+          </article>
+          <article class="order-detail__card">
+            <h4>Shipping</h4>
+            <dl>
+              <div><dt>Address</dt><dd>${escapeAdminHtml(order.shipping.shippingAddress || "-")}</dd></div>
+              <div><dt>City</dt><dd>${escapeAdminHtml(order.shipping.city || "-")}</dd></div>
+              <div><dt>State</dt><dd>${escapeAdminHtml(order.shipping.state || "-")}</dd></div>
+              <div><dt>Country</dt><dd>${escapeAdminHtml(order.shipping.country || "-")}</dd></div>
+            </dl>
+          </article>
+          <article class="order-detail__card">
+            <h4>Financial summary</h4>
+            <dl>
+              <div><dt>Subtotal</dt><dd>${escapeAdminHtml(formatNairaFromKobo(order.subtotal))}</dd></div>
+              <div><dt>Delivery</dt><dd>${escapeAdminHtml(formatNairaFromKobo(order.deliveryAmount))}</dd></div>
+              <div><dt>Total</dt><dd>${escapeAdminHtml(formatNairaFromKobo(order.totalAmount))}</dd></div>
+            </dl>
+          </article>
+        </div>
+
+        <article class="order-detail__card">
+          <h4>Items</h4>
+          <div class="order-item-list">
+            ${order.items.map((item) => `
+              <div class="order-item-row">
+                <div><strong>${escapeAdminHtml(item.productName || "Unknown product")}</strong><small>${escapeAdminHtml(item.selectedSize || "-")} · ${escapeAdminHtml(item.selectedColor || "-")}</small></div>
+                <div><span>Qty</span><strong>${item.quantity}</strong></div>
+                <div><span>Unit</span><strong>${escapeAdminHtml(formatNairaFromKobo(item.unitPrice))}</strong></div>
+                <div><span>Line</span><strong>${escapeAdminHtml(formatNairaFromKobo(item.lineTotal))}</strong></div>
+                <div><span>Order status</span><strong>${escapeAdminHtml(formatOrderStatusLabel(order.orderStatus))}</strong></div>
+                <div><span>Payment</span><strong>${escapeAdminHtml(formatOrderStatusLabel(order.paymentStatus))}</strong></div>
+                <div><span>Reservation</span><strong>${escapeAdminHtml(String(order.inventoryReservationStatus || "none"))}</strong></div>
+              </div>`).join("") || '<p class="products-empty">No items recorded.</p>'}
+          </div>
+        </article>
+
+        <div class="order-status-actions">
+          ${transitionOptions.length ? transitionOptions.map((nextStatus) => `<button class="button button--primary" type="button" data-order-status-change="${escapeAdminHtml(nextStatus)}" ${disabledReason ? "disabled" : ""}>${escapeAdminHtml(formatOrderStatusLabel(nextStatus))}</button>`).join("") : '<span class="order-status-message">No further fulfillment transition is available.</span>'}
+        </div>
+        ${disabledReason ? `<p class="order-status-message">Fulfillment is paused: ${escapeAdminHtml(disabledReason)}</p>` : ""}
+
+        <div class="order-history">
+          <h4>Status history</h4>
+          <div class="order-history-row"><span>Previous</span><span>New</span><span>Reason</span><span>Timestamp</span><span>Admin</span></div>
+          ${history || '<p class="products-empty">No status history yet.</p>'}
+        </div>
+      </section>`;
+  }
+
+  async function loadOrders() {
+    showOnly(elements.orders);
+    updateAdminViewButtons("orders");
+    elements.orders.innerHTML = '<section class="state-card" role="status"><span class="loading-mark" aria-hidden="true"></span><p>Loading orders…</p></section>';
+    const params = new URLSearchParams({ page: String(ordersPage), limit: String(ordersLimit) });
+    if (ordersStatus !== "all") params.set("status", ordersStatus);
+    if (ordersPaymentStatus !== "all") params.set("paymentStatus", ordersPaymentStatus);
+    if (ordersQuery) params.set("q", ordersQuery);
+    if (ordersFrom) params.set("from", ordersFrom);
+    if (ordersTo) params.set("to", ordersTo);
+    try {
+      const response = await requestAdmin(`${ordersUrl}?${params}`);
+      if (!response) return;
+      const result = await response.json();
+      if (!response.ok || !result?.success || !Array.isArray(result.orders) || !result.pagination) throw new Error(result?.message || "Orders could not be loaded.");
+      renderOrders(result);
+    } catch (error) {
+      elements.orders.innerHTML = `<section class="state-card error-card" role="alert"><h2>Orders could not be loaded</h2><p>${escapeAdminHtml(error.message || "Check your connection and try again.")}</p><button class="button button--secondary" type="button" data-orders-retry>Try again</button></section>`;
+    }
+  }
+
+  async function loadOrderDetail(id) {
+    try {
+      const response = await requestAdmin(`${ordersUrl}/${encodeURIComponent(id)}`);
+      if (!response) return;
+      const result = await response.json();
+      if (!response.ok || !result?.success || !result.order) throw new Error(result?.message || "Order details could not be loaded.");
+      ordersSelected = result;
+      ordersFeedback = "";
+      ordersFeedbackKind = "";
+      await loadOrders();
+    } catch (error) {
+      ordersFeedback = error.message || "Order details could not be loaded.";
+      ordersFeedbackKind = "error";
+      await loadOrders();
+    }
+  }
+
+  async function submitOrderStatusUpdate(orderId, nextStatus) {
+    const reason = window.prompt(`Optional note for moving this order to ${formatOrderStatusLabel(nextStatus)}:`, "") ?? "";
+    const payload = { orderStatus: nextStatus };
+    if (reason.trim()) payload.reason = reason.trim();
+    try {
+      const response = await requestAdmin(`${ordersUrl}/${encodeURIComponent(orderId)}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response) return;
+      const result = await response.json();
+      if (!response.ok || !result?.success) throw new Error(result?.message || "The order status could not be updated.");
+      ordersFeedback = `Order moved to ${formatOrderStatusLabel(nextStatus)}.`;
+      ordersFeedbackKind = "success";
+      ordersSelected = { order: result.order };
+      await loadOrders();
+    } catch (error) {
+      ordersFeedback = error.message || "The order status could not be updated.";
+      ordersFeedbackKind = "error";
+      await loadOrders();
+    }
   }
 
   function renderInventory(payload) {
@@ -422,8 +631,10 @@
   elements.nav.addEventListener("click", (event) => {
     const button = event.target.closest("[data-admin-view]");
     if (!button) return;
-    if (button.dataset.adminView === "products") loadProducts();
-    else if (button.dataset.adminView === "inventory") loadInventory();
+    const view = button.dataset.adminView;
+    if (view === "products") loadProducts();
+    else if (view === "inventory") loadInventory();
+    else if (view === "orders") loadOrders();
     else { updateAdminViewButtons("dashboard"); loadDashboard(); }
   });
 
@@ -476,6 +687,32 @@
     if (event.target.closest("[data-inventory-retry]")) { await loadInventory(); return; }
     const pageButton = event.target.closest("[data-inventory-page]");
     if (pageButton && !pageButton.disabled) { inventoryPage = Number(pageButton.dataset.inventoryPage); await loadInventory(); }
+  });
+
+  elements.orders.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (event.target.id === "orders-search-form") {
+      const values = new FormData(event.target);
+      ordersQuery = String(values.get("q") || "").trim();
+      ordersStatus = String(values.get("status") || "all");
+      ordersPaymentStatus = String(values.get("paymentStatus") || "all");
+      ordersFrom = String(values.get("from") || "");
+      ordersTo = String(values.get("to") || "");
+      ordersPage = 1;
+      ordersSelected = null;
+      ordersFeedback = "";
+      await loadOrders();
+    }
+  });
+
+  elements.orders.addEventListener("click", async (event) => {
+    const open = event.target.closest("[data-order-open]");
+    if (open) { await loadOrderDetail(open.dataset.orderOpen); return; }
+    const pageButton = event.target.closest("[data-orders-page]");
+    if (pageButton && !pageButton.disabled) { ordersPage = Number(pageButton.dataset.ordersPage); await loadOrders(); return; }
+    if (event.target.closest("[data-orders-retry]")) { await loadOrders(); return; }
+    const updateButton = event.target.closest("[data-order-status-change]");
+    if (updateButton) { await submitOrderStatusUpdate(ordersSelected?.order?.id || "", updateButton.dataset.orderStatusChange); }
   });
 
   function renderDashboard(data) {

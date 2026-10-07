@@ -176,7 +176,39 @@ h1, h2, p { margin-top: 0; }
 .inventory-history h4 { margin-bottom: .75rem; }
 .inventory-history-row { display: grid; grid-template-columns: minmax(130px, .8fr) minmax(130px, .8fr) minmax(180px, 1.4fr) minmax(100px, .8fr); gap: .7rem; padding: .7rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .7rem; overflow-wrap: anywhere; }
 
-@media (max-width: 900px) { .inventory-row { grid-template-columns: minmax(130px, 1fr) minmax(100px, .7fr) minmax(200px, 1.5fr); } .inventory-row > button { grid-column: 3; justify-self: end; } }
+.orders-toolbar { grid-template-columns: minmax(220px, 1.4fr) minmax(140px, .8fr) minmax(140px, .8fr) minmax(140px, .6fr) minmax(140px, .6fr) auto; }
+.orders-toolbar input, .orders-toolbar select { width: 100%; min-height: 42px; padding: .65rem .75rem; border: 1px solid var(--line); border-radius: 2px; color: var(--ink); background: #fff; font: 500 .82rem "Segoe UI", sans-serif; }
+.orders-toolbar label { display: grid; gap: .4rem; color: var(--muted); font-size: .7rem; font-weight: 800; }
+.orders-list { display: grid; gap: .65rem; }
+.orders-row { display: grid; grid-template-columns: minmax(130px, .8fr) minmax(210px, 1.4fr) minmax(120px, .8fr) minmax(110px, .7fr) minmax(110px, .7fr) minmax(110px, .7fr) minmax(90px, .6fr) auto; align-items: center; gap: .8rem; padding: 1rem; border: 1px solid var(--line); background: #fff; }
+.orders-row__cell { display: grid; gap: .2rem; }
+.orders-row__cell strong, .orders-row__cell span { display: block; }
+.orders-row__cell span { color: var(--muted); font-size: .68rem; }
+.orders-row__status { display: inline-flex; align-items: center; width: fit-content; padding: .25rem .55rem; border-radius: 20px; background: #f3efe8; color: var(--ink); font-size: .62rem; font-weight: 800; }
+.orders-row__warning { color: var(--red); font-weight: 700; }
+.order-detail { padding: clamp(1rem, 3vw, 2rem); margin-top: 1.5rem; border: 1px solid var(--line); background: #fff; }
+.order-detail__header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; margin-bottom: 1.5rem; }
+.order-detail__header h3 { margin: 0 0 .3rem; font: 500 1.5rem Georgia, serif; }
+.order-detail__header p { margin: 0; color: var(--muted); font-size: .75rem; }
+.order-detail__meta { display: flex; flex-wrap: wrap; gap: .45rem; }
+.order-detail__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.order-detail__card { padding: 1rem; border: 1px solid var(--line); background: var(--paper); }
+.order-detail__card h4 { margin: 0 0 .8rem; font: 500 1.05rem Georgia, serif; }
+.order-detail__card dl { display: grid; gap: .45rem; margin: 0; }
+.order-detail__card dt { color: var(--muted); font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.order-detail__card dd { margin: 0; font-size: .82rem; line-height: 1.55; }
+.order-item-list { display: grid; gap: .65rem; margin-top: 1rem; }
+.order-item-row { display: grid; grid-template-columns: minmax(200px, 1.5fr) repeat(5, minmax(90px, .7fr)); gap: .6rem; padding: .8rem .7rem; border: 1px solid var(--line); background: #fff; font-size: .76rem; }
+.order-item-row strong { display: block; }
+.order-item-row span, .order-item-row small { color: var(--muted); }
+.order-history { margin-top: 1.5rem; }
+.order-history h4 { margin: 0 0 .75rem; font: 500 1.1rem Georgia, serif; }
+.order-history-row { display: grid; grid-template-columns: minmax(110px, .7fr) minmax(110px, .7fr) minmax(110px, .7fr) minmax(150px, 1.3fr) minmax(100px, .8fr); gap: .7rem; padding: .7rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .7rem; overflow-wrap: anywhere; }
+.order-status-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin: 1rem 0 0; }
+.order-status-actions .button { min-height: 36px; }
+.order-status-message { margin-top: .8rem; color: var(--muted); font-size: .74rem; }
+
+@media (max-width: 900px) { .inventory-row { grid-template-columns: minmax(130px, 1fr) minmax(100px, .7fr) minmax(200px, 1.5fr); } .inventory-row > button { grid-column: 3; justify-self: end; } .orders-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); } .orders-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .order-detail__grid { grid-template-columns: 1fr; } }
 @media (max-width: 560px) {
   .inventory-toolbar { grid-template-columns: 1fr; }
   .inventory-row { grid-template-columns: 1fr auto; gap: .65rem; }
