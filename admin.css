@@ -197,6 +197,11 @@ h1, h2, p { margin-top: 0; }
 .order-detail__card dl { display: grid; gap: .45rem; margin: 0; }
 .order-detail__card dt { color: var(--muted); font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .order-detail__card dd { margin: 0; font-size: .82rem; line-height: 1.55; }
+.order-delivery { margin-top: 1rem; }
+.delivery-update-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-top: 1rem; }
+.delivery-update-form label { display: grid; gap: .35rem; color: var(--muted); font-size: .68rem; font-weight: 800; }
+.delivery-update-form input, .delivery-update-form select { width: 100%; min-height: 40px; padding: .6rem .7rem; border: 1px solid var(--line); border-radius: 2px; background: #fff; color: var(--ink); font: 500 .8rem "Segoe UI", sans-serif; }
+.delivery-update-form button { align-self: end; }
 .order-item-list { display: grid; gap: .65rem; margin-top: 1rem; }
 .order-item-row { display: grid; grid-template-columns: minmax(200px, 1.5fr) repeat(5, minmax(90px, .7fr)); gap: .6rem; padding: .8rem .7rem; border: 1px solid var(--line); background: #fff; font-size: .76rem; }
 .order-item-row strong { display: block; }
@@ -218,4 +223,5 @@ h1, h2, p { margin-top: 0; }
   .inventory-adjust-form h4, .inventory-adjust-form > p { grid-column: 1; }
   .inventory-adjust-form > button { width: 100%; }
   .inventory-history-row { grid-template-columns: 1fr 1fr; }
+  .delivery-update-form { grid-template-columns: 1fr; }
 }

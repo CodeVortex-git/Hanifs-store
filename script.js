@@ -16,6 +16,7 @@ const PRODUCTS_API_URL = `${API_BASE_URL}/api/products`;
 const ORDERS_API_URL = `${API_BASE_URL}/api/orders`;
 const PAYMENTS_API_URL = `${API_BASE_URL}/api/payments`;
 const AUTH_API_URL = `${API_BASE_URL}/api/auth`;
+const DELIVERY_QUOTE_URL = `${ORDERS_API_URL}/delivery-quote`;
 
 let authCsrfToken = null;
 let currentUser = null;
@@ -101,6 +102,9 @@ let selectedOrderId = null;
 let selectedOrder = null;
 let selectedOrderState = "idle";
 let selectedOrderError = "";
+let deliveryQuote = null;
+let deliveryQuoteState = "";
+let deliveryQuoteRequestId = 0;
 let orderHistoryRequestId = 0;
 let orderDetailRequestId = 0;
 let modalTrigger = null;
@@ -224,6 +228,19 @@ function renderOrderHistory() {
       } else if (selectedOrder) {
         const address = [selectedOrder.shippingAddress, selectedOrder.city, selectedOrder.state, selectedOrder.country]
           .filter(Boolean).map(escapeHtml).join(", ");
+        const delivery = selectedOrder.delivery;
+        const deliveryDetails = delivery ? `
+          <section class="account-order__delivery" aria-label="Delivery information">
+            <h4>Delivery</h4>
+            <dl>
+              <div><dt>Status</dt><dd>${escapeHtml(String(delivery.status || "pending").replaceAll("_", " "))}</dd></div>
+              ${delivery.provider ? `<div><dt>Provider</dt><dd>${escapeHtml(delivery.provider)}</dd></div>` : ""}
+              ${delivery.trackingNumber ? `<div><dt>Tracking</dt><dd>${escapeHtml(delivery.trackingNumber)}</dd></div>` : ""}
+              ${delivery.reference ? `<div><dt>Reference</dt><dd>${escapeHtml(delivery.reference)}</dd></div>` : ""}
+              ${delivery.estimatedDeliveryDate ? `<div><dt>Estimated delivery</dt><dd>${escapeHtml(formatOrderDate(delivery.estimatedDeliveryDate))}</dd></div>` : ""}
+              ${delivery.failedReason ? `<div><dt>Delivery note</dt><dd>${escapeHtml(delivery.failedReason)}</dd></div>` : ""}
+            </dl>
+          </section>` : '<p class="account-order__shipping">Delivery information is not available yet.</p>';
         detail = `
           <div class="account-order__details">
             <dl class="account-order__totals">
@@ -234,6 +251,7 @@ function renderOrderHistory() {
             <h4>Items</h4>
             <ul>${selectedOrder.items.map((item) => `<li><span>${escapeHtml(item.productName)} · ${escapeHtml(item.selectedSize)} / ${escapeHtml(item.selectedColor)} × ${item.quantity}</span><strong>${formatPrice(item.lineTotal)}</strong></li>`).join("")}</ul>
             <p class="account-order__shipping"><strong>Delivery address</strong><br>${address}</p>
+            ${deliveryDetails}
           </div>`;
       }
     }
@@ -902,6 +920,8 @@ function updateCartViews() {
 // ============================================
 function renderCheckoutSummary() {
   const subtotal = getCartSubtotal();
+  const quoteApplies = deliveryQuote && checkoutQuoteState() === deliveryQuoteState;
+  const deliveryAmount = quoteApplies ? deliveryQuote.deliveryAmount : null;
   return `
     <aside class="checkout-summary" aria-labelledby="checkout-summary-title">
       <h2 id="checkout-summary-title">ORDER SUMMARY</h2>
@@ -922,10 +942,35 @@ function renderCheckoutSummary() {
       </div>
       <dl>
         <div><dt>Subtotal</dt><dd>${formatPrice(subtotal)}</dd></div>
-        <div><dt>Delivery</dt><dd>Calculated at checkout</dd></div>
-        <div class="checkout-summary__total"><dt>Total</dt><dd>${formatPrice(subtotal)}</dd></div>
+        <div><dt>Delivery estimate</dt><dd>${deliveryAmount === null ? "Select a state" : formatPrice(deliveryAmount)}</dd></div>
+        <div class="checkout-summary__total"><dt>Estimated total</dt><dd>${formatPrice(subtotal + (deliveryAmount || 0))}</dd></div>
       </dl>
+      <p class="checkout-summary__note">Delivery and the final total are confirmed by the server when your order is created.</p>
     </aside>`;
+}
+
+function checkoutQuoteState() {
+  const state = document.querySelector("#checkout-state")?.value || checkoutData?.shipping?.state || "";
+  return state.trim().toLowerCase();
+}
+
+async function loadDeliveryQuote(state, country = "Nigeria") {
+  const normalizedState = String(state || "").trim();
+  const requestId = ++deliveryQuoteRequestId;
+  deliveryQuote = null;
+  deliveryQuoteState = normalizedState.toLowerCase();
+  if (!normalizedState) return;
+  const params = new URLSearchParams({ state: normalizedState, country });
+  const response = await fetch(`${DELIVERY_QUOTE_URL}?${params}`, {
+    headers: { Accept: "application/json" },
+    credentials: "include",
+  });
+  const result = await response.json().catch(() => null);
+  if (requestId !== deliveryQuoteRequestId) return;
+  if (!response.ok || !result?.success || !Number.isSafeInteger(result.deliveryAmount)) {
+    throw new Error(result?.message || "Delivery pricing is unavailable for that destination.");
+  }
+  deliveryQuote = { deliveryAmount: result.deliveryAmount };
 }
 
 function renderCheckoutPage() {
@@ -987,7 +1032,7 @@ function renderCheckoutPage() {
         </fieldset>
         <fieldset>
           <legend>DELIVERY METHOD</legend>
-          <label class="checkout-method"><input type="radio" name="deliveryMethod" value="standard" checked> <span>Standard delivery</span><small>Calculated later</small></label>
+          <label class="checkout-method"><input type="radio" name="deliveryMethod" value="standard" checked> <span>Standard delivery</span><small>Server-priced by destination</small></label>
         </fieldset>
         <button class="button button-primary checkout-form__submit" type="submit">CONTINUE TO PAYMENT</button>
         <p class="checkout-form__status" id="checkout-form-status" role="status" aria-live="polite"></p>
@@ -1011,6 +1056,8 @@ function renderCheckoutPage() {
       if (field) field.value = value;
     });
   }
+  const summary = checkoutContent.querySelector(".checkout-summary");
+  if (summary) summary.outerHTML = renderCheckoutSummary();
 }
 
 // Client-side totals and customer data are not authoritative. The future backend
@@ -1019,6 +1066,9 @@ function renderCheckoutPage() {
 // come from a trusted provider/backend flow, never from browser state.
 function buildPendingOrder() {
   const subtotal = getCartSubtotal();
+  const quotedDelivery = deliveryQuote && deliveryQuoteState === checkoutQuoteState()
+    ? deliveryQuote.deliveryAmount
+    : null;
   return {
     items: cart
       .map((item) => {
@@ -1039,7 +1089,11 @@ function buildPendingOrder() {
       .filter(Boolean),
     customer: { ...checkoutData.customer },
     shipping: { ...checkoutData.shipping },
-    pricing: { subtotal, delivery: 0, total: subtotal },
+    pricing: {
+      subtotal,
+      delivery: quotedDelivery,
+      total: quotedDelivery === null ? null : subtotal + quotedDelivery,
+    },
   };
 }
 
@@ -1057,7 +1111,7 @@ function buildOrderPayload() {
 }
 
 function renderReviewPage() {
-  pendingOrder = buildPendingOrder();
+  if (!createdOrder) pendingOrder = buildPendingOrder();
   checkoutContent.innerHTML = `
     <div class="checkout-page__header">
       <button class="checkout-page__return" type="button" data-review-action="edit" ${createdOrder ? "disabled" : ""}>&larr; EDIT INFORMATION</button>
@@ -1085,9 +1139,10 @@ function renderReviewPage() {
         <h3 id="review-summary-title">ORDER SUMMARY</h3>
         <dl>
           <div><dt>Subtotal</dt><dd>${formatPrice(pendingOrder.pricing.subtotal)}</dd></div>
-          <div><dt>Delivery</dt><dd>Calculated at checkout</dd></div>
-          <div class="review-summary__total"><dt>Total</dt><dd>${formatPrice(pendingOrder.pricing.total)}</dd></div>
+          <div><dt>Delivery estimate</dt><dd>${pendingOrder.pricing.delivery === null ? "Unavailable" : formatPrice(pendingOrder.pricing.delivery)}</dd></div>
+          <div class="review-summary__total"><dt>Estimated total</dt><dd>${pendingOrder.pricing.total === null ? "Unavailable" : formatPrice(pendingOrder.pricing.total)}</dd></div>
         </dl>
+        <p class="checkout-summary__note">The order total is calculated and confirmed by the server.</p>
         <button class="button button-primary" type="button" data-review-action="payment" ${isCreatingOrder ? "disabled" : ""}>${createdOrder ? "RETRY PAYMENT" : "CONTINUE TO PAYMENT"}</button>
         <a class="button button-secondary" href="#cart-page">RETURN TO CART</a>
         <p class="review-summary__status" id="review-summary-status" role="status" aria-live="polite"></p>
@@ -1137,10 +1192,10 @@ function validateCheckoutForm(form) {
   return isValid;
 }
 
-function handleCheckoutSubmit(event) {
+async function handleCheckoutSubmit(event) {
   event.preventDefault();
-  const form = event.currentTarget;
-  const status = form.querySelector("#checkout-form-status");
+  const form = event.target;
+  let status = form.querySelector("#checkout-form-status");
   if (!validateCheckoutForm(form)) {
     status.textContent = "Please review the highlighted fields.";
     const firstInvalid = form.querySelector('[aria-invalid="true"]');
@@ -1163,6 +1218,14 @@ function handleCheckoutSubmit(event) {
       country: values.country,
     },
   };
+  status.textContent = "Checking delivery pricing for your destination…";
+  try {
+    await loadDeliveryQuote(checkoutData.shipping.state, checkoutData.shipping.country);
+  } catch (error) {
+    status.textContent = error.message || "Delivery pricing is unavailable for that destination.";
+    checkoutData = null;
+    return;
+  }
   isEditingCheckout = false;
   pendingOrder = buildPendingOrder();
   renderReviewPage();
@@ -1201,6 +1264,13 @@ async function submitReviewedOrder(button, status) {
         return;
       }
       createdOrder = orderResult.order;
+      pendingOrder.pricing = {
+        subtotal: createdOrder.subtotal,
+        delivery: createdOrder.deliveryAmount,
+        total: createdOrder.totalAmount,
+      };
+      renderReviewPage();
+      status = checkoutContent.querySelector("#review-summary-status");
     }
 
     status.textContent = "Preparing your secure Paystack checkout…";
@@ -1989,6 +2059,20 @@ document.addEventListener("submit", (event) => {
   }
   if (event.target.id === "checkout-form") {
     handleCheckoutSubmit(event);
+  }
+});
+document.addEventListener("change", async (event) => {
+  if (event.target.id !== "checkout-state") return;
+  const status = document.querySelector("#checkout-form-status");
+  try {
+    await loadDeliveryQuote(event.target.value, "Nigeria");
+    const summary = checkoutContent?.querySelector(".checkout-summary");
+    if (summary) summary.outerHTML = renderCheckoutSummary();
+    if (status) status.textContent = "";
+  } catch (error) {
+    if (status) status.textContent = error.message || "Delivery pricing is unavailable for that destination.";
+    const summary = checkoutContent?.querySelector(".checkout-summary");
+    if (summary) summary.outerHTML = renderCheckoutSummary();
   }
 });
 document.addEventListener("click", (event) => {

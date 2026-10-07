@@ -36,6 +36,7 @@ const adminProductsRouter = require("./routes/adminProducts");
 const adminInventoryRouter = require("./routes/adminInventory");
 const adminOrdersRouter = require("./routes/adminOrders");
 const ordersRouter = require("./routes/orders");
+const deliveryRouter = require("./routes/delivery");
 const paymentsRouter = require("./routes/payments");
 const productsRouter = require("./routes/products");
 
@@ -102,6 +103,7 @@ app.use("/api/admin", adminDashboardRouter);
 app.use("/api/admin/products", adminProductsRouter);
 app.use("/api/admin/inventory", adminInventoryRouter);
 app.use("/api/admin/orders", adminOrdersRouter);
+app.use("/api/orders", deliveryRouter);
 app.use("/api/orders", ordersRouter);
 app.use("/api/payments", paymentsRouter);
 app.use("/api/products", productsRouter);

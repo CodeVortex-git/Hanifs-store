@@ -15,4 +15,12 @@ const PAYMENT_STATUS = Object.freeze({
   REFUNDED: "refunded",
 });
 
-module.exports = { ORDER_STATUS, PAYMENT_STATUS };
+const DELIVERY_STATUS = Object.freeze({
+  PENDING: "pending",
+  READY_FOR_DISPATCH: "ready_for_dispatch",
+  OUT_FOR_DELIVERY: "out_for_delivery",
+  DELIVERED: "delivered",
+  DELIVERY_FAILED: "delivery_failed",
+});
+
+module.exports = { ORDER_STATUS, PAYMENT_STATUS, DELIVERY_STATUS };

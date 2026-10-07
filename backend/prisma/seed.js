@@ -247,6 +247,11 @@ const products = [
   },
 ];
 
+async function resetAutoincrementSequences() {
+  await prisma.$queryRaw`SELECT setval(pg_get_serial_sequence('public."Product"', 'id'), COALESCE((SELECT MAX(id) FROM "Product"), 0), true)`;
+  await prisma.$queryRaw`SELECT setval(pg_get_serial_sequence('public."ProductVariant"', 'id'), COALESCE((SELECT MAX(id) FROM "ProductVariant"), 0), true)`;
+}
+
 async function seedDatabase() {
   let totalVariants = 0;
 
@@ -301,15 +306,19 @@ async function seedDatabase() {
   }
 
   // Preserve explicit Product IDs and prevent future autoincrement collisions.
-  await prisma.$queryRaw`SELECT setval(pg_get_serial_sequence('"Product"', 'id'), (SELECT MAX(id) FROM "Product"), true)`;
+  await resetAutoincrementSequences();
   console.log(`Seeded ${products.length} products and ${totalVariants} variants.`);
 }
 
-seedDatabase()
-  .catch(async (error) => {
-    console.error('Error seeding database:', error);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+if (require.main === module) {
+  seedDatabase()
+    .catch(async (error) => {
+      console.error('Error seeding database:', error);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
+
+module.exports = { seedDatabase };

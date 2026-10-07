@@ -31,6 +31,14 @@ enum InventoryReservationStatus {
   released
 }
 
+enum DeliveryStatus {
+  pending
+  ready_for_dispatch
+  out_for_delivery
+  delivered
+  delivery_failed
+}
+
 model Product {
   id          Int      @id @default(autoincrement())
   name        String   @db.VarChar(255)
@@ -76,6 +84,7 @@ model Admin {
   sessions             AdminSession[]
   inventoryAdjustments InventoryAdjustment[]
   statusHistory        OrderStatusHistory[]
+  deliveryStatusHistory DeliveryStatusHistory[]
 }
 
 model AdminSession {
@@ -170,6 +179,7 @@ model Order {
 
   items        OrderItem[]
   statusHistory OrderStatusHistory[]
+  delivery     Delivery?
 
   @@index([inventoryReservationStatus, inventoryReservationExpiresAt])
   @@index([userId, createdAt])
@@ -189,6 +199,41 @@ model OrderStatusHistory {
   createdAt      DateTime    @default(now())
 
   @@index([orderId, createdAt])
+  @@index([adminId, createdAt])
+}
+
+model Delivery {
+  id                     String                  @id @default(cuid())
+  orderId                String                  @unique
+  order                  Order                   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  deliveryFee            Int                     @default(0)
+  status                 DeliveryStatus          @default(pending)
+  provider               String?                 @db.VarChar(100)
+  trackingNumber         String?                 @db.VarChar(255)
+  reference              String?                 @db.VarChar(255)
+  estimatedDeliveryDate  DateTime?
+  dispatchedAt           DateTime?
+  deliveredAt            DateTime?
+  failedReason           String?                 @db.VarChar(500)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  statusHistory          DeliveryStatusHistory[]
+
+  @@index([status, createdAt])
+}
+
+model DeliveryStatusHistory {
+  id             String        @id @default(cuid())
+  deliveryId     String
+  delivery       Delivery      @relation(fields: [deliveryId], references: [id], onDelete: Restrict)
+  adminId        String
+  admin          Admin          @relation(fields: [adminId], references: [id], onDelete: Restrict)
+  previousStatus DeliveryStatus
+  newStatus      DeliveryStatus
+  reason         String?       @db.VarChar(500)
+  createdAt      DateTime      @default(now())
+
+  @@index([deliveryId, createdAt])
   @@index([adminId, createdAt])
 }
 

@@ -8,10 +8,12 @@
 const express = require("express");
 const { createOrder, getOrder, listOrders } = require("../controllers/orderController");
 const { authenticateSession, protectCsrf, requireAuthentication } = require("../middleware/auth");
+const { getDeliveryQuote } = require("../controllers/deliveryController");
 
 const router = express.Router();
 
 router.post("/", authenticateSession, protectCsrf, createOrder);
+router.get("/delivery-quote", getDeliveryQuote);
 router.get("/", authenticateSession, requireAuthentication, listOrders);
 router.get("/:id", authenticateSession, requireAuthentication, getOrder);
 

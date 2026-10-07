@@ -208,6 +208,60 @@
     return options[status] || [];
   }
 
+  function legalDeliveryTransitions(status) {
+    const options = {
+      pending: ["ready_for_dispatch"],
+      ready_for_dispatch: ["out_for_delivery"],
+      out_for_delivery: ["delivered", "delivery_failed"],
+    };
+    return options[status] || [];
+  }
+
+  function renderDeliveryDetail(delivery) {
+    if (!delivery) {
+      return `<article class="order-detail__card"><h4>Delivery</h4><p>Delivery details are unavailable for this order.</p></article>`;
+    }
+    const transitions = legalDeliveryTransitions(delivery.status);
+    const dateValue = delivery.estimatedDeliveryDate
+      ? new Date(delivery.estimatedDeliveryDate).toISOString().slice(0, 10)
+      : "";
+    const history = (delivery.statusHistory || []).map((entry) => `
+      <article class="order-history-row">
+        <span>${escapeAdminHtml(formatOrderStatusLabel(entry.previousStatus))}</span>
+        <span>${escapeAdminHtml(formatOrderStatusLabel(entry.newStatus))}</span>
+        <span>${escapeAdminHtml(entry.reason || "—")}</span>
+        <span>${escapeAdminHtml(formatOrderDate(entry.createdAt))}</span>
+        <span>${escapeAdminHtml((entry.admin && (entry.admin.displayName || entry.admin.email)) || "Admin")}</span>
+      </article>`).join("");
+    return `
+      <article class="order-detail__card order-delivery">
+        <h4>Delivery · ${escapeAdminHtml(formatOrderStatusLabel(delivery.status))}</h4>
+        <dl>
+          <div><dt>Provider</dt><dd>${escapeAdminHtml(delivery.provider || "Not assigned")}</dd></div>
+          <div><dt>Tracking number</dt><dd>${escapeAdminHtml(delivery.trackingNumber || "—")}</dd></div>
+          <div><dt>Reference</dt><dd>${escapeAdminHtml(delivery.reference || "—")}</dd></div>
+          <div><dt>Estimated delivery</dt><dd>${escapeAdminHtml(formatOrderDate(delivery.estimatedDeliveryDate))}</dd></div>
+          <div><dt>Dispatched</dt><dd>${escapeAdminHtml(formatOrderDate(delivery.dispatchedAt))}</dd></div>
+          <div><dt>Delivered</dt><dd>${escapeAdminHtml(formatOrderDate(delivery.deliveredAt))}</dd></div>
+          ${delivery.failedReason ? `<div><dt>Failure reason</dt><dd>${escapeAdminHtml(delivery.failedReason)}</dd></div>` : ""}
+        </dl>
+        <form id="delivery-update-form" class="delivery-update-form" data-order-id="${escapeAdminHtml(delivery.orderId || "")}">
+          ${transitions.length ? `<label>Next delivery status<select name="status"><option value="">No status change</option>${transitions.map((status) => `<option value="${status}">${escapeAdminHtml(formatOrderStatusLabel(status))}</option>`).join("")}</select></label>` : '<p class="order-status-message">No further delivery transition is available.</p>'}
+          <label>Provider<input name="provider" maxlength="100" value="${escapeAdminHtml(delivery.provider || "")}"></label>
+          <label>Tracking number<input name="trackingNumber" maxlength="255" value="${escapeAdminHtml(delivery.trackingNumber || "")}"></label>
+          <label>Reference<input name="reference" maxlength="255" value="${escapeAdminHtml(delivery.reference || "")}"></label>
+          <label>Estimated delivery<input name="estimatedDeliveryDate" type="date" value="${escapeAdminHtml(dateValue)}"></label>
+          <label>Failure reason<input name="failedReason" maxlength="500" value="${escapeAdminHtml(delivery.failedReason || "")}"></label>
+          <label>History reason (optional)<input name="reason" maxlength="500"></label>
+          <button class="button button--primary" type="submit">Save delivery update</button>
+        </form>
+        <div class="order-history"><h4>Delivery status history</h4>
+          <div class="order-history-row"><span>Previous</span><span>New</span><span>Reason</span><span>Timestamp</span><span>Admin</span></div>
+          ${history || '<p class="products-empty">No delivery status changes yet.</p>'}
+        </div>
+      </article>`;
+  }
+
   function renderOrders(payload) {
     const pageCount = Math.max(1, payload.pagination.totalPages || 1);
     const rows = payload.orders.map((order) => `
@@ -295,6 +349,8 @@
           </article>
         </div>
 
+        ${renderDeliveryDetail(detail.delivery)}
+
         <article class="order-detail__card">
           <h4>Items</h4>
           <div class="order-item-list">
@@ -347,16 +403,65 @@
 
   async function loadOrderDetail(id) {
     try {
-      const response = await requestAdmin(`${ordersUrl}/${encodeURIComponent(id)}`);
-      if (!response) return;
-      const result = await response.json();
+      const [response, deliveryResponse] = await Promise.all([
+        requestAdmin(`${ordersUrl}/${encodeURIComponent(id)}`),
+        requestAdmin(`${ordersUrl}/${encodeURIComponent(id)}/delivery`),
+      ]);
+      if (!response || !deliveryResponse) return;
+      const [result, deliveryResult] = await Promise.all([response.json(), deliveryResponse.json()]);
       if (!response.ok || !result?.success || !result.order) throw new Error(result?.message || "Order details could not be loaded.");
-      ordersSelected = result;
+      ordersSelected = {
+        ...result,
+        delivery: deliveryResponse.ok && deliveryResult?.success ? deliveryResult.delivery : null,
+      };
       ordersFeedback = "";
       ordersFeedbackKind = "";
       await loadOrders();
     } catch (error) {
       ordersFeedback = error.message || "Order details could not be loaded.";
+      ordersFeedbackKind = "error";
+      await loadOrders();
+    }
+  }
+
+  async function submitDeliveryUpdate(form) {
+    const values = new FormData(form);
+    const payload = {};
+    for (const key of ["status", "provider", "trackingNumber", "reference", "estimatedDeliveryDate", "failedReason", "reason"]) {
+      const value = String(values.get(key) || "").trim();
+      if (value) payload[key] = value;
+    }
+    if (payload.estimatedDeliveryDate) {
+      payload.estimatedDeliveryDate = new Date(`${payload.estimatedDeliveryDate}T00:00:00.000Z`).toISOString();
+    }
+    if (!Object.keys(payload).length) {
+      ordersFeedback = "Enter at least one delivery change.";
+      ordersFeedbackKind = "error";
+      await loadOrders();
+      return;
+    }
+    const orderId = form.dataset.orderId || ordersSelected?.order?.id;
+    try {
+      const response = await requestAdmin(`${ordersUrl}/${encodeURIComponent(orderId)}/delivery`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response) return;
+      const result = await response.json();
+      if (!response.ok || !result?.success || !result.delivery) throw new Error(result?.message || "Delivery could not be updated.");
+      ordersFeedback = "Delivery information updated.";
+      ordersFeedbackKind = "success";
+      await loadOrderDetail(orderId);
+      ordersFeedback = "Delivery information updated.";
+      ordersFeedbackKind = "success";
+      const feedback = elements.orders.querySelector(".products-feedback");
+      if (feedback) {
+        feedback.textContent = ordersFeedback;
+        feedback.className = "products-feedback products-feedback--success";
+      }
+    } catch (error) {
+      ordersFeedback = error.message || "Delivery could not be updated.";
       ordersFeedbackKind = "error";
       await loadOrders();
     }
@@ -377,7 +482,7 @@
       if (!response.ok || !result?.success) throw new Error(result?.message || "The order status could not be updated.");
       ordersFeedback = `Order moved to ${formatOrderStatusLabel(nextStatus)}.`;
       ordersFeedbackKind = "success";
-      ordersSelected = { order: result.order };
+      ordersSelected = { order: result.order, delivery: ordersSelected?.delivery || null };
       await loadOrders();
     } catch (error) {
       ordersFeedback = error.message || "The order status could not be updated.";
@@ -702,7 +807,7 @@
       ordersSelected = null;
       ordersFeedback = "";
       await loadOrders();
-    }
+    } else if (event.target.id === "delivery-update-form") await submitDeliveryUpdate(event.target);
   });
 
   elements.orders.addEventListener("click", async (event) => {

@@ -1,6 +1,7 @@
 const prisma = require("./prisma");
 const inventoryService = require("./inventoryService");
-const { ORDER_STATUS, PAYMENT_STATUS } = require("../constants/statuses");
+const { calculateDeliveryFee: calculateDeliveryFeeForShipping, DeliveryServiceError } = require("./deliveryService");
+const { ORDER_STATUS, PAYMENT_STATUS, DELIVERY_STATUS } = require("../constants/statuses");
 
 const MAX_DATABASE_INT = 2_147_483_647;
 const DEFAULT_ORDER_PAGE_SIZE = 10;
@@ -31,9 +32,32 @@ function requiredText(value, label, maxLength) {
 }
 
 function validateOrderRequest(body) {
-  if (!isRecord(body) || !isRecord(body.customer) || !isRecord(body.shipping)) {
+  if (!isRecord(body)) {
     throw new OrderServiceError(400, "Enter valid customer and shipping details.");
   }
+
+  const allowedTopLevelKeys = new Set(["customer", "shipping", "items"]);
+  const unknownTopLevel = Object.keys(body).find((key) => !allowedTopLevelKeys.has(key));
+  if (unknownTopLevel) {
+    throw new OrderServiceError(400, `Unsupported order field: ${unknownTopLevel}.`);
+  }
+
+  if (!isRecord(body.customer) || !isRecord(body.shipping)) {
+    throw new OrderServiceError(400, "Enter valid customer and shipping details.");
+  }
+
+  const allowedCustomerKeys = new Set(["email", "firstName", "lastName", "phone"]);
+  const unknownCustomerField = Object.keys(body.customer).find((key) => !allowedCustomerKeys.has(key));
+  if (unknownCustomerField) {
+    throw new OrderServiceError(400, `Unsupported customer field: ${unknownCustomerField}.`);
+  }
+
+  const allowedShippingKeys = new Set(["address", "city", "state", "country"]);
+  const unknownShippingField = Object.keys(body.shipping).find((key) => !allowedShippingKeys.has(key));
+  if (unknownShippingField) {
+    throw new OrderServiceError(400, `Unsupported shipping field: ${unknownShippingField}.`);
+  }
+
   if (Object.hasOwn(body, "userId")) {
     throw new OrderServiceError(400, "The order user cannot be supplied by the request.");
   }
@@ -86,6 +110,15 @@ function validateOrderRequest(body) {
   }
 
   return { customer, shipping, quantities };
+}
+
+function calculateDeliveryFee(shipping) {
+  try {
+    return calculateDeliveryFeeForShipping(shipping);
+  } catch (error) {
+    if (error instanceof DeliveryServiceError) throw new OrderServiceError(error.status, error.message);
+    throw error;
+  }
 }
 
 async function createOrder(body, authenticatedUserId = null) {
@@ -145,9 +178,11 @@ async function createOrder(body, authenticatedUserId = null) {
       throw new OrderServiceError(400, "The order amount is too large to process.");
     }
 
-    // Delivery pricing is intentionally deferred to Milestone 37.
-    const deliveryAmount = 0;
+    const deliveryAmount = calculateDeliveryFee(shipping);
     const totalAmount = subtotal + deliveryAmount;
+    if (!Number.isSafeInteger(totalAmount) || totalAmount > MAX_DATABASE_INT) {
+      throw new OrderServiceError(400, "The order amount is too large to process.");
+    }
 
     const created = await transaction.order.create({
       data: {
@@ -166,6 +201,13 @@ async function createOrder(body, authenticatedUserId = null) {
         orderStatus: ORDER_STATUS.PENDING,
         paymentStatus: PAYMENT_STATUS.PENDING,
         items: { create: items },
+        delivery: {
+          create: {
+            deliveryFee: deliveryAmount,
+            status: DELIVERY_STATUS.PENDING,
+            provider: "local_delivery",
+          },
+        },
       },
       select: {
         id: true,
@@ -175,6 +217,22 @@ async function createOrder(body, authenticatedUserId = null) {
         deliveryAmount: true,
         totalAmount: true,
         createdAt: true,
+        delivery: {
+          select: {
+            id: true,
+            deliveryFee: true,
+            status: true,
+            provider: true,
+            trackingNumber: true,
+            reference: true,
+            estimatedDeliveryDate: true,
+            dispatchedAt: true,
+            deliveredAt: true,
+            failedReason: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
         items: {
           select: {
             productVariantId: true,
@@ -229,6 +287,20 @@ const customerOrderListSelect = {
   subtotal: true,
   deliveryAmount: true,
   totalAmount: true,
+  delivery: {
+    select: {
+      id: true,
+      status: true,
+      provider: true,
+      trackingNumber: true,
+      reference: true,
+      estimatedDeliveryDate: true,
+      dispatchedAt: true,
+      deliveredAt: true,
+      failedReason: true,
+      deliveryFee: true,
+    },
+  },
 };
 
 const customerOrderDetailSelect = {
@@ -297,4 +369,5 @@ module.exports = {
   getCustomerOrder,
   listCustomerOrders,
   OrderServiceError,
+  calculateDeliveryFee,
 };
