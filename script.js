@@ -119,7 +119,7 @@ function renderAccountView() {
 
   const header = `
     <div class="account-page__header">
-      <p class="account-page__eyebrow">HANIF'S STORE</p>
+      <p class="account-page__eyebrow">YAHAL STORE</p>
       <h2 id="account-title">YOUR ACCOUNT</h2>
       <p>Manage your profile and account access.</p>
     </div>`;
@@ -170,7 +170,7 @@ function renderAccountView() {
       <div class="checkout-field"><label for="account-login-password">Password</label><input id="account-login-password" name="password" type="password" autocomplete="current-password" minlength="12" maxlength="128" required></div>
       <button class="button button-primary" type="submit">SIGN IN</button>
       ${feedback}
-      <p class="account-form__switch">New to Hanif's Store? <button type="button" data-account-mode="register">Create an account</button></p>
+      <p class="account-form__switch">New to YAHAL STORE? <button type="button" data-account-mode="register">Create an account</button></p>
     </form>`;
 
   accountContent.innerHTML = `${header}${loadError}

@@ -1,4 +1,4 @@
-// HANIF'S STORE — Express API foundation.
+// YAHAL STORE — Express API foundation.
 //
 // ARCHITECTURAL BOUNDARY (frontend -> backend)
 // Target flow for the eventual full-stack implementation:
@@ -93,7 +93,7 @@ app.use(
 app.get("/api/health", (_req, res) => {
   res.json({
     success: true,
-    message: "HANIF'S STORE API is running",
+    message: "YAHAL STORE API is running",
   });
 });
 
@@ -136,7 +136,7 @@ app.use((error, _req, res, _next) => {
 
 if (require.main === module) {
   app.listen(port, () => {
-    console.log(`HANIF'S STORE API listening on port ${port}`);
+    console.log(`YAHAL STORE API listening on port ${port}`);
   });
 }
 

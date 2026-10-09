@@ -35,7 +35,7 @@ frontend — `index.html`, `script.js`, and `style.css` are served directly.
 
 | Method | Endpoint | Status | Behaviour |
 | --- | --- | --- | --- |
-| GET | `/api/health` | Working | `{ success: true, message: "HANIF'S STORE API is running" }` |
+| GET | `/api/health` | Working | `{ success: true, message: "YAHAL STORE API is running" }` |
 | POST | `/api/orders` | Placeholder | `501` — persistent order storage is not implemented yet |
 | GET | `/api/orders/:id` | Placeholder | `501` — persistent order storage is not implemented yet |
 | POST | `/api/payments/initialize` | Placeholder | `501` — payment integration is not yet configured |
